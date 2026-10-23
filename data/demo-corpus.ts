@@ -12,6 +12,7 @@ export type DemoDocument = {
 export const DEMO_ORGANIZATION = "Universidade de Vigo (demo no oficial)";
 
 export const DEMO_DOCUMENTS: DemoDocument[] = [
+  // --- originales ---
   {
     id: "doc-matricula-2026",
     title: "Matrícula de grado: guía ficticia de demostración",
@@ -99,5 +100,72 @@ export const DEMO_DOCUMENTS: DemoDocument[] = [
     status: "demo",
     content:
       "Esta fuente es ficticia. La plataforma minimiza los datos personales enviados al proveedor de IA y no debe incluir secretos en el cliente. Las conversaciones de demo se almacenan localmente en el navegador salvo que exista un backend configurado. Para producción se requiere revisión legal, RGPD y políticas de retención.",
+  },
+  // --- historia y funciones pro ---
+  {
+    id: "doc-historia-uvigo",
+    title: "Historia de la Universidade de Vigo: referencia ficticia",
+    sourceUrl: "https://demo.vigo-ai-campus.local/fuentes/historia-uvigo",
+    locale: "es",
+    organization: DEMO_ORGANIZATION,
+    reviewedAt: "2026-09-01",
+    status: "demo",
+    content:
+      "Esta fuente es ficticia. La Universidade de Vigo se crea en 1990 a partir de la segregación de la Universidade de Santiago de Compostela. Cuenta con tres campus: Vigo, Ourense y Pontevedra. Su lema y valores incluyen compromiso con la calidad, la internacionalización y la transferencia de conocimiento. La institución impulsa investigación, innovación y formación permanente. El agente puede usar esta información para contextualizar respuestas, pero debe indicar que es demo y no sustituye fuentes oficiales.",
+  },
+  {
+    id: "doc-admision",
+    title: "Admisión y acceso: guía ficticia",
+    sourceUrl: "https://demo.vigo-ai-campus.local/fuentes/admision-acceso",
+    locale: "es",
+    organization: DEMO_ORGANIZATION,
+    reviewedAt: "2026-09-01",
+    status: "demo",
+    content:
+      "Esta fuente es ficticia. El acceso a grado puede realizarse por PAU, ciclos formativos, titulados, mayores de 25/40/45 años o vías específicas. Cada vía tiene requisitos y plazos. La plataforma orienta sobre dónde consultar la convocatoria oficial y qué documentación suele requerirse, pero no valida expedientes ni garantiza admisión.",
+  },
+  {
+    id: "doc-empleabilidad",
+    title: "Empleabilidad y prácticas: guía ficticia",
+    sourceUrl: "https://demo.vigo-ai-campus.local/fuentes/empleabilidad-practicas",
+    locale: "es",
+    organization: DEMO_ORGANIZATION,
+    reviewedAt: "2026-09-01",
+    status: "demo",
+    content:
+      "Esta fuente es ficticia. Las prácticas académicas externas requieren convenio, seguro y seguimiento. La empleabilidad incluye ferias de empleo, emprendimiento y orientación. La plataforma puede explicar el proceso general y derivar a la unidad de empleabilidad para casos específicos.",
+  },
+  {
+    id: "doc-investigacion",
+    title: "Investigación y transferencia: guía ficticia",
+    sourceUrl: "https://demo.vigo-ai-campus.local/fuentes/investigacion-transferencia",
+    locale: "es",
+    organization: DEMO_ORGANIZATION,
+    reviewedAt: "2026-09-01",
+    status: "demo",
+    content:
+      "Esta fuente es ficticia. La investigación incluye grupos, proyectos competitivos, tesis y transferencia al tejido empresarial. La plataforma puede orientar sobre dónde buscar convocatorias y contactar con la oficina de transferencia, pero no gestiona proyectos ni firma contratos.",
+  },
+  {
+    id: "doc-campus-servicios",
+    title: "Servicios del campus: guía ficticia",
+    sourceUrl: "https://demo.vigo-ai-campus.local/fuentes/servicios-campus",
+    locale: "es",
+    organization: DEMO_ORGANIZATION,
+    reviewedAt: "2026-09-01",
+    status: "demo",
+    content:
+      "Esta fuente es ficticia. Los servicios del campus incluyen comedor, residencias, transporte, deporte, biblioteca y salud. La plataforma puede informar de horarios generales y derivar al servicio correspondiente para reservas o incidencias.",
+  },
+  {
+    id: "doc-tramites",
+    title: "Trámites administrativos: guía ficticia",
+    sourceUrl: "https://demo.vigo-ai-campus.local/fuentes/tramites-administrativos",
+    locale: "es",
+    organization: DEMO_ORGANIZATION,
+    reviewedAt: "2026-09-01",
+    status: "demo",
+    content:
+      "Esta fuente es ficticia. Los trámites incluyen certificados, secretaría, convocatorias y gestión económica. La plataforma explica el proceso general y prepara borradores, pero no presenta solicitudes oficiales ni accede a sistemas privados.",
   },
 ];
