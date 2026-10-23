@@ -1,0 +1,1 @@
+﻿export default function Page(){return <div className="mx-auto max-w-3xl px-4 py-12"><h1 className="text-2xl font-bold text-primary">Miembros y roles (demo)</h1><p className="mt-2 text-muted-foreground">Roles: superadmin SaaS, org_admin, operator, user. Demo sin autenticacion real.</p></div>}

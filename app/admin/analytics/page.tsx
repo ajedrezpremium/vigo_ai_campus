@@ -1,0 +1,1 @@
+﻿export default function Page(){return <div className="mx-auto max-w-3xl px-4 py-12"><h1 className="text-2xl font-bold text-primary">Analitica (demo)</h1><p className="mt-2 text-muted-foreground">Metricas de demo no disponibles sin backend configurado. No se inventan resultados.</p></div>}

@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VIGO AI CAMPUS — paquete inicial
 
-## Getting Started
+Este paquete contiene los documentos de arranque para desarrollar una plataforma SaaS de agentes IA para servicios universitarios.
 
-First, run the development server:
+## Archivos
+- `MEGAPROMPT_VIGO_AI_CAMPUS.md`: prompt principal para el agente de programación.
+- `docs/PROPUESTA_VIGO_AI_CAMPUS.md`: propuesta de producto y estrategia.
+- `supabase/migrations/0001_initial_schema.sql`: esquema inicial ilustrativo para revisar antes de producción.
+- `.env.example`: variables de entorno de ejemplo sin secretos.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Uso recomendado
+1. Crea un repositorio privado en GitHub.
+2. Abre el proyecto en tu IDE de desarrollo.
+3. Pega el contenido de `MEGAPROMPT_VIGO_AI_CAMPUS.md` en el agente de programación.
+4. Pide que inspeccione primero el repositorio y proponga un plan antes de modificar archivos.
+5. Crea un proyecto Supabase de desarrollo y aplica las migraciones solo después de revisarlas.
+6. Configura variables de entorno en local y en Vercel.
+7. Despliega una demo con datos ficticios y etiqueta claramente que no es un servicio oficial de la Universidade de Vigo.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Desarrollo local
+1. `npm install`
+2. Copia `.env.example` a `.env.local` y completa las variables.
+3. `npm run dev`
+4. Abre `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Despliegue
+- Vercel: conecta el repositorio y configura las variables de entorno.
+- Supabase: aplica `supabase/migrations/0001_initial_schema.sql` y crea un usuario de prueba.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Importante
+El SQL es una base inicial de referencia, no una solución certificada para producción. Requiere revisión técnica, pruebas de seguridad, definición de roles y adaptación al modelo de datos final. No añadas secretos al repositorio. No cargues datos personales reales de estudiantes o empleados en la demo.
