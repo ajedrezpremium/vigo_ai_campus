@@ -7,27 +7,33 @@ import { useI18n, type Locale } from "@/lib/i18n";
 
 function Logo3D() {
   return (
-    <div className="relative flex items-center gap-2">
-      <div
-        className="relative h-9 w-9"
-        style={{ perspective: 600 }}
-      >
+    <div className="relative flex items-center gap-3">
+      <div className="relative h-11 w-11" style={{ perspective: 800 }}>
         <div
-          className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-cyan-500 shadow-lg"
-          style={{ transform: "rotateX(12deg) rotateY(-18deg)", transformStyle: "preserve-3d" }}
+          className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary via-cyan-500 to-indigo-600 shadow-[0_8px_24px_rgba(37,99,235,0.45)]"
+          style={{ transform: "rotateX(14deg) rotateY(-22deg)", transformStyle: "preserve-3d" }}
         >
-          <div className="absolute inset-0 flex items-center justify-center text-lg font-black text-white drop-shadow-md">
+          <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
             V
           </div>
           <div
-            className="absolute -bottom-1 left-1 right-1 h-2 rounded-full bg-primary/40 blur-sm"
-            style={{ transform: "translateZ(-8px)" }}
+            className="absolute -bottom-2 left-2 right-2 h-3 rounded-full bg-primary/50 blur-md"
+            style={{ transform: "translateZ(-12px)" }}
+          />
+          <div
+            className="absolute inset-0 rounded-2xl border border-white/30"
+            style={{ transform: "translateZ(6px)" }}
           />
         </div>
       </div>
-      <span className="bg-gradient-to-r from-primary to-cyan-600 bg-clip-text text-lg font-bold text-transparent">
-        VIGO AI
-      </span>
+      <div className="flex flex-col leading-tight">
+        <span className="bg-gradient-to-r from-primary to-cyan-600 bg-clip-text text-lg font-extrabold tracking-tight text-transparent">
+          VIGO AI
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+          CAMPUS
+        </span>
+      </div>
     </div>
   );
 }
