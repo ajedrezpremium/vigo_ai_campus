@@ -8,7 +8,6 @@ import {
   MessageSquareText,
   RefreshCw,
   ShieldAlert,
-  Ticket,
   Timer,
 } from "lucide-react";
 import {

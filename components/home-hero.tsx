@@ -48,10 +48,13 @@ export function HomeHero() {
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(query.matches);
+    const frame = window.requestAnimationFrame(() => setReducedMotion(query.matches));
     const onChange = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
     query.addEventListener("change", onChange);
-    return () => query.removeEventListener("change", onChange);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      query.removeEventListener("change", onChange);
+    };
   }, []);
 
   useEffect(() => {

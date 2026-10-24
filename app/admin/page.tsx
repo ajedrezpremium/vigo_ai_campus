@@ -2,7 +2,7 @@
 
 import { connection } from "next/server";
 import Link from "next/link";
-import { Activity, BookOpenCheck, Bot, Ticket, Users } from "lucide-react";
+import { Activity, BookOpenCheck, Bot, Ticket } from "lucide-react";
 import { getViewer } from "@/lib/auth";
 import { getMetricsSummary } from "@/lib/metrics";
 import { getCorpusStats } from "@/lib/retrieval";

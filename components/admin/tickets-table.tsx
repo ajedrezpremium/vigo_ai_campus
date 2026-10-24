@@ -93,7 +93,7 @@ export function TicketsTable() {
                     </td>
                     <td className="py-3 pr-4"><Badge variant="outline">{ticket.category}</Badge></td>
                     <td className="py-3 pr-4 text-slate-500">
-                      {new Date(ticket.created_at ?? ticket.createdAt ?? Date.now()).toLocaleString("es-ES")}
+                      {ticket.created_at || ticket.createdAt ? new Date(ticket.created_at ?? ticket.createdAt ?? "").toLocaleString("es-ES") : "—"}
                     </td>
                     <td className="py-3">
                       <Badge variant="secondary" className={ticket.status === "open" ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-700"}>

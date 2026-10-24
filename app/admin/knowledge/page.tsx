@@ -1,6 +1,5 @@
 ﻿export const instant = false;
 
-import { connection } from "next/server";
 import { ExternalLink, FileText, ShieldCheck } from "lucide-react";
 import { getCorpusStats, listCorpusDocuments } from "@/lib/retrieval";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

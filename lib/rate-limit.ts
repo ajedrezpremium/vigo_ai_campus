@@ -1,5 +1,3 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-
 /**
  * Limitador de ventana fija compatible con Route Handlers de Next.js.
  *
