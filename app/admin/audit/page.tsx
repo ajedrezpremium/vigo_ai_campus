@@ -1,1 +1,8 @@
-﻿export default function Page(){return <div className="mx-auto max-w-3xl px-4 py-12"><h1 className="text-2xl font-bold text-primary">Auditoria (demo)</h1><p className="mt-2 text-muted-foreground">Registro de acciones administrativas pendiente de implementacion real.</p></div>}
+﻿export const instant = false;
+
+import { AuditTable } from "@/components/admin/audit-table";
+
+export default function Page() {
+  return <AuditTable />;
+}
+

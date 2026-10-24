@@ -27,7 +27,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const protectedPath = path.startsWith("/app") || path.startsWith("/admin");
+  // La demo pública vive en /app y /app/chat; el historial y las solicitudes requieren cuenta.
+  const protectedPath =
+    path.startsWith("/admin") || path.startsWith("/app/historial") || path.startsWith("/app/solicitudes");
   if (protectedPath && !user) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = "/login";

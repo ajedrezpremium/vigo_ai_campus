@@ -1,3 +1,5 @@
+﻿export const instant = false;
+
 import { AGENTS } from "@/lib/agents";
 export default function Page() {
   return (
@@ -6,10 +8,11 @@ export default function Page() {
       <ul className="mt-4 space-y-2">
         {AGENTS.map((a) => (
           <li key={a.slug} className="rounded border p-3">
-            {a.name} — {a.slug}
+            {a.name} â€” {a.slug}
           </li>
         ))}
       </ul>
     </div>
   );
 }
+

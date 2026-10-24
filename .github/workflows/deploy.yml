@@ -1,0 +1,72 @@
+name: Deploy VIGO AI CAMPUS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  quality:
+    name: Lint, tests y build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - name: Build
+        run: |
+          NEXT_PUBLIC_APP_NAME="VIGO AI CAMPUS" NEXT_PUBLIC_APP_URL="https://vigo-ai-campus.vercel.app" NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" LLM_API_KEY="${{ secrets.LLM_API_KEY }}" npm run build
+
+  deploy:
+    name: Producción (Vercel)
+    needs: quality
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Enlazar proyecto Vercel
+        run: npx vercel link --yes --project vigo-ai-campus --scope ajedrez-premiums-projects --token "${{ secrets.VERCEL_TOKEN }}"
+      - name: Descargar variables de producción
+        run: npx vercel pull --yes --environment=production --token "${{ secrets.VERCEL_TOKEN }}"
+      - name: Build de producción
+        run: npx vercel build --prod --token "${{ secrets.VERCEL_TOKEN }}"
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(npx vercel deploy --prebuilt --prod --token "${{ secrets.VERCEL_TOKEN }}")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: Resumen
+        run: echo "Desplegado en ${{ steps.deploy.outputs.url }}"
+
+  migrations:
+    name: Migraciones Supabase
+    needs: quality
+    runs-on: ubuntu-latest
+    if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' && secrets.SUPABASE_DB_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Aplicar migraciones
+        run: |
+          export SUPABASE_ACCESS_TOKEN="${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+          supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}" --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          supabase db push --password "${{ secrets.SUPABASE_DB_PASSWORD }}"

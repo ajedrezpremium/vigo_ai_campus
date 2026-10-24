@@ -1,31 +1,136 @@
-# VIGO AI CAMPUS — paquete inicial
+# VIGO AI CAMPUS
 
-Este paquete contiene los documentos de arranque para desarrollar una plataforma SaaS de agentes IA para servicios universitarios.
+Superagente académico para la Universidade de Vigo: orientación sobre matrícula, becas, calendarios, movilidad y servicios con **fuentes oficiales citadas**, derivación humana y panel de administración multi-tenant.
 
-## Archivos
-- `MEGAPROMPT_VIGO_AI_CAMPUS.md`: prompt principal para el agente de programación.
-- `docs/PROPUESTA_VIGO_AI_CAMPUS.md`: propuesta de producto y estrategia.
-- `supabase/migrations/0001_initial_schema.sql`: esquema inicial ilustrativo para revisar antes de producción.
-- `.env.example`: variables de entorno de ejemplo sin secretos.
+> Demo académica independiente. No está afiliada ni respaldada por la Universidade de Vigo. Las fuentes oficiales se enlazan; las fuentes de demostración se etiquetan como no oficiales.
 
-## Uso recomendado
-1. Crea un repositorio privado en GitHub.
-2. Abre el proyecto en tu IDE de desarrollo.
-3. Pega el contenido de `MEGAPROMPT_VIGO_AI_CAMPUS.md` en el agente de programación.
-4. Pide que inspeccione primero el repositorio y proponga un plan antes de modificar archivos.
-5. Crea un proyecto Supabase de desarrollo y aplica las migraciones solo después de revisarlas.
-6. Configura variables de entorno en local y en Vercel.
-7. Despliega una demo con datos ficticios y etiqueta claramente que no es un servicio oficial de la Universidade de Vigo.
+- Producción: <https://vigo-ai-campus.vercel.app/app>
+- Stack: Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, Supabase, OpenRouter.
+- Corpus: 26 fuentes oficiales de `uvigo.gal` (23 HTML + 3 PDF), capturadas y versionadas.
 
-## Desarrollo local
-1. `npm install`
-2. Copia `.env.example` a `.env.local` y completa las variables.
-3. `npm run dev`
-4. Abre `http://localhost:3000`.
+## Arranque rápido
+
+```bash
+npm install
+cp .env.example .env.local   # rellena las claves
+npm run dev                  # http://localhost:3000
+```
+
+Comprobaciones:
+
+```bash
+npm test          # 11 tests de seguridad, roles, RAG y compositor
+npm run lint
+npm run build
+```
+
+## Variables de entorno
+
+| Variable | Obligatoria | Uso |
+|---|---|---|
+| `NEXT_PUBLIC_APP_URL` | sí | URL pública (OpenRouter `HTTP-Referer` y enlaces) |
+| `NEXT_PUBLIC_SUPABASE_URL` | sí | Proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | sí | Cliente y Auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | sí | Provisión de miembros, métricas y soporte (solo servidor) |
+| `LLM_PROVIDER` | no | `openrouter` por defecto |
+| `LLM_API_KEY` | sí | Clave de OpenRouter |
+| `LLM_MODEL` | no | Primer modelo free; por defecto `google/gemma-4-31b-it:free` |
+| `LLM_MODELS` | no | Lista separada por comas para fallback |
+| `AI_MAX_OUTPUT_TOKENS` | no | 900 por defecto |
+| `AI_DAILY_REQUEST_LIMIT` | no | 30 consultas/día por IP (además de 8/min) |
+| `ADMIN_EMAILS` | no | Emails que se provisionan como administradores |
+| `CRON_SECRET` | no | Protege `/api/cron/uvigo-sync` |
+| `UVIGO_WEBHOOK_SECRET` | no | Firma HMAC del webhook UVigo |
+| `UVIGO_SEDE_BASE_URL` / `_API_KEY` | no | Adaptador SEDE |
+| `UVIGO_SECRETARIA_BASE_URL` / `_API_KEY` | no | Adaptador Secretaría |
+| `UVIGO_CAMPUS_REMOTO_BASE_URL` / `_API_KEY` | no | Adaptador Campus Remoto |
+
+## Cómo funciona el RAG
+
+1. `scripts/ingest-uvigo.mjs` descarga páginas y PDFs públicos de `uvigo.gal`, extrae el contenido principal con `cheerio`/`pdf-parse` y genera `data/uvigo-corpus.ts` con URL, fecha, checksum y texto.
+2. `lib/retrieval.ts` construye un índice de fragmentos, aplica stemming ligero ES/GL, BM25, prioridad de fuentes oficiales y bonus por título/intención.
+3. `POST /api/chat` valida y sanea la entrada, aplica rate limiting, recupera 5 fragmentos, construye un prompt con fuentes delimitadas como datos y llama a OpenRouter.
+4. Si OpenRouter no está disponible o se agota la cuota free, `lib/answer-composer.ts` compone una respuesta profesional **solo con las fuentes recuperadas**, sin inventar datos.
+5. Cada respuesta devuelve citas con `type: official|demo`, URL, organización y fecha de captura.
+
+### Actualizar el corpus
+
+```bash
+npm run ingest:uvigo
+```
+
+El script aborta si ingiere menos de 5 fuentes para no publicar un corpus vacío. El resultado se versiona: el despliegue es reproducible y no depende de la red en runtime.
+
+## OpenRouter: cuota gratuita
+
+La clave actual es `free_tier`. OpenRouter limita los modelos `:free` a **50 peticiones/día** con menos de 10 créditos comprados y **1.000/día** a partir de 10 créditos. El límite es por cuenta, no por modelo: cambiar de modelo no evita el 429.
+
+- Consulta el estado en `/admin/ai`.
+- Si la cuota está agotada, el chat sigue respondiendo con el compositor basado en fuentes y muestra un aviso con la hora de reinicio UTC.
+- Para desbloquear 1.000/día: <https://openrouter.ai/settings/credits>.
+- El orden de modelos se puede cambiar con `LLM_MODEL` y `LLM_MODELS`.
+
+## Roles y multi-tenant
+
+Roles de producto: `estudiante`, `pas`, `pdi`, `admin`.
+Mapeo con la BD: `org_admin → admin`, `operator → PAS`, `user → estudiante`.
+
+- `lib/roles.ts`: matriz de permisos.
+- `lib/auth.ts`: viewer, provisión automática de organización/membresía y bootstrap del primer admin.
+- `middleware.ts`: protección de `/app` y `/admin`.
+- `app/admin/layout.tsx`: segundo control de rol en servidor.
+- `supabase/migrations/0001_initial_schema.sql`: esquema y RLS base.
+- `supabase/migrations/0002_roles_and_support.sql`: roles nativos, lectura de soporte, auditoría y vista `audit_logs`.
+
+Aplicar migraciones:
+
+```bash
+supabase link --project-ref <ref>
+supabase db push
+```
+
+## API
+
+| Ruta | Método | Descripción |
+|---|---|---|
+| `/api/chat` | POST | Consulta RAG + LLM + persistencia + métricas |
+| `/api/tickets` | POST/GET | Crear/listar derivaciones |
+| `/api/feedback` | POST | Valoración de respuestas |
+| `/api/metrics` | GET | KPIs, latencia, tokens, serie diaria y por agente |
+| `/api/audit` | GET | Últimos eventos de auditoría |
+| `/api/knowledge` | GET | Estadísticas y documentos del corpus |
+| `/api/llm/status` | GET | Estado de OpenRouter, cuota y modelos |
+| `/api/auth/provision` | POST | Crea organización/membresía idempotente |
+| `/api/integrations/uvigo/health` | GET | Estado de adaptadores UVigo |
+| `/api/webhooks/uvigo` | POST | Webhook con firma HMAC |
+| `/api/cron/uvigo-sync` | GET | Comprueba disponibilidad de fuentes (Vercel Cron) |
+
+## Accesibilidad e i18n
+
+- Skip link, navegación con `aria-label`, menú móvil, foco visible y `prefers-reduced-motion`.
+- Chat con `role="log"`, `aria-live`, etiquetas, contador de caracteres y estados de carga/error.
+- Selector ES/GL/EN en cabecera; el chat traduce sus cadenas y responde en el idioma elegido.
+- Las páginas de contenido corporativo siguen en español; la migración completa a `next-i18next` está documentada como siguiente fase.
 
 ## Despliegue
-- Vercel: conecta el repositorio y configura las variables de entorno.
-- Supabase: aplica `supabase/migrations/0001_initial_schema.sql` y crea un usuario de prueba.
 
-## Importante
-El SQL es una base inicial de referencia, no una solución certificada para producción. Requiere revisión técnica, pruebas de seguridad, definición de roles y adaptación al modelo de datos final. No añadas secretos al repositorio. No cargues datos personales reales de estudiantes o empleados en la demo.
+```bash
+npx vercel link --project vigo-ai-campus
+npx vercel --prod
+```
+
+CI/CD: `.github/workflows/deploy.yml` ejecuta lint, tests, build, migraciones Supabase y deploy a Vercel. Requiere los secretos `VERCEL_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` y `SUPABASE_DB_PASSWORD`.
+
+## Documentación
+
+- [Guía técnica](docs/GUIA_TECNICA.md)
+- [Plan de mejora ejecutado](docs/PLAN_MEJORA_EJECUTADO.md)
+- [Análisis de la web UVigo](docs/ANALISIS_WEB_UVIGO_PUNTOS_DEBILES.md)
+- [Propuesta VIGO AI CAMPUS](docs/PROPUESTA_VIGO_AI_CAMPUS.md)
+
+## Límites conocidos
+
+- Los endpoints reales de SEDE, Secretaría y Campus Remoto requieren convenio y credenciales de la UVigo; los adaptadores devuelven `configured: false` y no inventan datos.
+- El rate limiting en memoria es por instancia. Para producción con varias instancias, sustituir por Upstash Redis/Vercel KV.
+- Las imágenes del campus son de `uvigo.gal` y se usan con atribución en un contexto académico. Para uso comercial hay que obtener licencia.
+- El SSO institucional (SAML/OIDC) requiere configuración del proveedor UVigo; la app usa Supabase Auth con email/contraseña.

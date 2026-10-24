@@ -31,10 +31,11 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <a href="#contenido-principal" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">Saltar al contenido</a>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           <I18nProvider>
             <SiteHeader />
-            <main className="flex-1">{children}</main>
+            <main id="contenido-principal" className="flex-1">{children}</main>
             <SiteFooter />
             <FloatingAgent />
           </I18nProvider>
