@@ -5,10 +5,12 @@ import { retrieve, retrievalConfidence, topScore } from "@/lib/retrieval";
 import { callLLM, LLMQuotaExceededError } from "@/lib/llm";
 import { composeGroundedAnswer } from "@/lib/answer-composer";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { getViewer } from "@/lib/auth";
+import { getViewer, type Viewer } from "@/lib/auth";
 import { inspectUserInput, wrapUntrustedContext } from "@/lib/security";
 import { checkRateLimitAsync, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit";
 import { recordMetric, recordSecurityEvent } from "@/lib/metrics";
+import { requestIdFromHeaders } from "@/lib/observability/core";
+import { reportServerError } from "@/lib/observability/server";
 
 
 const BodySchema = z.object({
@@ -29,8 +31,9 @@ function json(body: unknown, init?: ResponseInit) {
 
 export async function POST(req: Request) {
   const startedAt = Date.now();
-  const requestId = crypto.randomUUID();
+  const requestId = requestIdFromHeaders(req.headers);
   const identifier = getClientIdentifier(req);
+  let viewer: Viewer | null = null;
 
   const burst = await checkRateLimitAsync(`chat:burst:${identifier}`, { limit: 8, windowMs: 60_000 });
   const dailyLimit = Number(process.env.AI_DAILY_REQUEST_LIMIT || 30);
@@ -89,7 +92,6 @@ export async function POST(req: Request) {
       );
     }
 
-    let viewer = null;
     try {
       viewer = await getViewer();
     } catch {
@@ -300,7 +302,14 @@ export async function POST(req: Request) {
       );
     }
     const message = err instanceof Error ? err.message : "Error desconocido";
-    console.error("[chat] fallo al procesar la consulta", { requestId, error: message.slice(0, 300) });
+    await reportServerError({
+      requestId,
+      route: "/api/chat",
+      method: req.method,
+      message,
+      organizationId: viewer?.organizationId ?? null,
+      source: "route",
+    });
     return json(
       { error: "No se pudo procesar la consulta. Inténtalo de nuevo.", code: "internal_error", requestId },
       { status: 500, headers: { "X-Request-Id": requestId } },

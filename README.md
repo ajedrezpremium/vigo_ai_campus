@@ -19,9 +19,10 @@ npm run dev                  # http://localhost:3000
 Comprobaciones:
 
 ```bash
-npm test          # 18 tests de seguridad, roles, aislamiento multi-tenant, RAG y compositor
+npm test          # 30 tests de seguridad, roles, aislamiento multi-tenant, RAG, compositor y observabilidad
 npm run lint
 npm run build
+npm run test:a11y # axe sobre 6 páginas + locale (requiere build previo)
 ```
 
 ## Variables de entorno
@@ -38,6 +39,8 @@ npm run build
 | `LLM_MODELS` | no | Lista separada por comas para fallback |
 | `DEMO_ADMIN` | no | `true` solo en local: abre `/admin` sin Supabase. En producción el modo demo es estudiante. |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | no | Rate limiting distribuido; si no se definen, se usa memoria por instancia. |
+| `SENTRY_DSN` | no | Reenvío de errores 5xx a Sentry sin SDK; si falta, solo log JSON + `audit_events`. |
+| `SENTRY_ENVIRONMENT` | no | Etiqueta de entorno en Sentry (`production` por defecto). |
 | `AI_MAX_OUTPUT_TOKENS` | no | 900 por defecto |
 | `AI_DAILY_REQUEST_LIMIT` | no | 30 consultas/día por IP (además de 8/min) |
 | `ADMIN_EMAILS` | no | Emails que se provisionan como administradores |
@@ -107,6 +110,15 @@ supabase db push
 | `/api/webhooks/uvigo` | POST | Webhook con firma HMAC |
 | `/api/cron/uvigo-sync` | GET | Comprueba disponibilidad de fuentes (Vercel Cron) |
 
+## Observabilidad
+
+- Cada petición recibe un `x-request-id` en `proxy.ts` (o lo genera la ruta); el id vuelve en la respuesta y en el cuerpo de los 5xx (`requestId`).
+- `lib/observability/core.ts` escribe **logs JSON** (`{ts, level, event, requestId, route, status…}`), mantiene un buffer en memoria y reenvía a Sentry si `SENTRY_DSN` existe (sin dependencia de `@sentry/nextjs`).
+- `lib/observability/server.ts` persiste los errores en `audit_events` con `action = "error.http"`, `target_id = requestId` y metadatos de ruta, método y estado. La escritura es *best-effort*: si Supabase falla, el error original no se pierde.
+- `instrumentation.ts` usa `onRequestError` para cubrir errores no capturados de rutas, RSC y Server Actions.
+- `/api/chat`, `/api/tickets` (GET/POST) y `/api/auth/provision` están instrumentados con `reportServerError()` / `errorResponse()`.
+- `/admin` muestra los eventos en la tabla de auditoría, con el `request_id` bajo la acción y resaltado para `error.*`. El filtro por organización se aplica también al buffer en memoria.
+
 ## Accesibilidad e i18n
 
 - Skip link, navegación con `aria-label`, menú móvil, foco visible y `prefers-reduced-motion`.
@@ -116,6 +128,7 @@ supabase db push
 - Catálogo único en `lib/i18n/messages.ts` (ES es la referencia de tipos; GL y EN deben cubrir las mismas claves). Helpers: `lib/i18n/config.ts` (locales y cookie) y `lib/i18n/server.ts` (`getLocale()`).
 - El chat mantiene su diccionario propio y envía `locale` al backend.
 - El panel `/admin` y el agente flotante son superficies internas en español y se marcan con `lang="es"` para que el lector de pantalla no las pronuncie con el idioma de la página.
+- Auditoría automatizada con `@axe-core/playwright` (`e2e/a11y.spec.ts`): portada, plataforma, precios, contacto, login y chat, más un test de renderizado en inglés. Solo bloquean `critical` y `serious`; el job corre en CI tras el build.
 - Coste asumido: leer cookies en el layout raíz hace que **todas las rutas se rendericen dinámicamente** (`ƒ`). Para volver a caché estática o SEO por idioma habría que migrar a `app/[locale]/...` reutilizando el mismo catálogo.
 
 ## Despliegue
@@ -125,13 +138,14 @@ npx vercel link --project vigo-ai-campus
 npx vercel --prod
 ```
 
-CI/CD: `.github/workflows/deploy.yml` ejecuta lint, tests, build, migraciones Supabase y deploy a Vercel. Requiere los secretos `VERCEL_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` y `SUPABASE_DB_PASSWORD`.
+CI/CD: `.github/workflows/deploy.yml` ejecuta lint, tests, build, accesibilidad (axe), migraciones Supabase y deploy a Vercel. Requiere los secretos `VERCEL_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` y `SUPABASE_DB_PASSWORD`.
 
 ## Documentación
 
 - [Guía técnica](docs/GUIA_TECNICA.md)
 - [Plan de mejora ejecutado](docs/PLAN_MEJORA_EJECUTADO.md)
 - [Plan de mejora V2](docs/PLAN_MEJORA_V2.md)
+- [Auditoría externa 2026-10-24](docs/AUDITORIA_2026-10-24.md)
 - [Análisis de la web UVigo](docs/ANALISIS_WEB_UVIGO_PUNTOS_DEBILES.md)
 - [Propuesta VIGO AI CAMPUS](docs/PROPUESTA_VIGO_AI_CAMPUS.md)
 

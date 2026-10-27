@@ -29,6 +29,10 @@ jobs:
       - name: Build
         run: |
           NEXT_PUBLIC_APP_NAME="VIGO AI CAMPUS" NEXT_PUBLIC_APP_URL="https://vigo-ai-campus.vercel.app" NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" LLM_API_KEY="${{ secrets.LLM_API_KEY }}" npm run build
+      - name: Instalar navegador para axe
+        run: npx playwright install --with-deps chromium
+      - name: Accesibilidad (axe)
+        run: npm run test:a11y
 
   deploy:
     name: Producción (Vercel)

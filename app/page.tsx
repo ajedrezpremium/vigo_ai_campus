@@ -185,7 +185,7 @@ export default async function Home() {
               <div key={name} className={`rounded-2xl border p-5 ${AGENT_STYLES[index]}`}>
                 <Icon className="h-6 w-6" />
                 <h3 className="mt-3 font-bold">{name}</h3>
-                <p className="mt-1 text-sm leading-relaxed opacity-80">{home.agentDescriptions[index]}</p>
+                <p className="mt-1 text-sm leading-relaxed">{home.agentDescriptions[index]}</p>
               </div>
             );
           })}

@@ -46,7 +46,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3">
-        <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold" aria-label={t.nav.homeLabel}>
+        <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold">
           <Logo3D />
         </Link>
 

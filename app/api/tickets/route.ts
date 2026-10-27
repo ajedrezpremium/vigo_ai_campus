@@ -5,6 +5,8 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getViewer } from "@/lib/auth";
 import { can } from "@/lib/roles";
 import { checkRateLimitAsync, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit";
+import { requestIdFromHeaders } from "@/lib/observability/core";
+import { errorResponse, reportServerError } from "@/lib/observability/server";
 
 
 const BodySchema = z.object({
@@ -25,6 +27,7 @@ const globalStore = globalThis as typeof globalThis & { __vigoDemoTickets?: Demo
 const demoTickets = (globalStore.__vigoDemoTickets ??= []);
 
 export async function POST(req: Request) {
+  const requestId = requestIdFromHeaders(req.headers);
   const limit = await checkRateLimitAsync(`tickets:${getClientIdentifier(req)}`, { limit: 5, windowMs: 3_600_000 });
   if (!limit.allowed) {
     return NextResponse.json(
@@ -74,7 +77,18 @@ export async function POST(req: Request) {
         persisted: true,
       });
     }
-    return NextResponse.json({ error: "No se pudo crear la derivación" }, { status: 500 });
+    await reportServerError({
+      requestId,
+      route: "/api/tickets",
+      method: "POST",
+      message: error.message,
+      organizationId: viewer.organizationId,
+      source: "route",
+    });
+    return errorResponse(requestId, {
+      error: "No se pudo crear la derivación",
+      code: "ticket_create_failed",
+    });
   }
 
   const ticket: DemoTicket = {
@@ -108,7 +122,8 @@ function serializeTicket(row: TicketRow | DemoTicket) {
   };
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const requestId = requestIdFromHeaders(req.headers);
   const viewer = await getViewer();
   const canManage = can(viewer.role, "tickets.manage");
   const canReadOwn = can(viewer.role, "tickets.read.own");
@@ -138,8 +153,18 @@ export async function GET() {
       .limit(100);
 
     if (error) {
-      console.error("[tickets] no se pudieron listar", error.message);
-      return NextResponse.json({ error: "No se pudieron cargar las derivaciones." }, { status: 500 });
+      await reportServerError({
+        requestId,
+        route: "/api/tickets",
+        method: "GET",
+        message: error.message,
+        organizationId: viewer.organizationId,
+        source: "route",
+      });
+      return errorResponse(requestId, {
+        error: "No se pudieron cargar las derivaciones.",
+        code: "ticket_list_failed",
+      });
     }
     return NextResponse.json({
       tickets: ((data ?? []) as TicketRow[]).map(serializeTicket),

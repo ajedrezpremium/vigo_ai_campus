@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -165,7 +166,7 @@ export function FloatingAgent() {
           className="group fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-cyan-500 to-indigo-600 text-white shadow-[0_12px_32px_rgba(37,99,235,0.5)] ring-4 ring-white/40 transition-all hover:scale-110 hover:shadow-[0_16px_40px_rgba(37,99,235,0.6)]"
           aria-label="Super Agente IA"
         >
-          <span className="text-2xl font-black drop-shadow-md">AI</span>
+          <Sparkles aria-hidden="true" className="h-7 w-7 drop-shadow-md" />
           <span className="pointer-events-none absolute -top-10 right-0 whitespace-nowrap rounded-lg bg-foreground px-3 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
             Super Agente IA
           </span>

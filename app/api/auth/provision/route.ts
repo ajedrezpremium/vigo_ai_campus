@@ -1,9 +1,12 @@
 ﻿import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { provisionMembership } from "@/lib/auth";
+import { requestIdFromHeaders } from "@/lib/observability/core";
+import { errorResponse, reportServerError } from "@/lib/observability/server";
 
 
-export async function POST() {
+export async function POST(req: Request) {
+  const requestId = requestIdFromHeaders(req.headers);
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
     return NextResponse.json({ ok: false, mode: "demo", reason: "supabase-not-configured" });
@@ -16,7 +19,18 @@ export async function POST() {
 
   const result = await provisionMembership(user.id, user.email ?? null);
   if (!result.ok) {
-    return NextResponse.json({ error: "No se pudo preparar la cuenta", reason: result.reason }, { status: 500 });
+    await reportServerError({
+      requestId,
+      route: "/api/auth/provision",
+      method: "POST",
+      message: `provision failed: ${result.reason}`,
+      organizationId: null,
+      source: "route",
+    });
+    return errorResponse(requestId, {
+      error: "No se pudo preparar la cuenta",
+      code: "provision_failed",
+    });
   }
   return NextResponse.json({
     ok: true,

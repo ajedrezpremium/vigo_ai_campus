@@ -60,9 +60,14 @@ export function AuditTable() {
                   <tr key={event.id} className="border-b border-slate-100 align-top last:border-0">
                     <td className="py-3 pr-4 text-slate-500">{new Date(event.created_at).toLocaleString("es-ES")}</td>
                     <td className="py-3 pr-4">
-                      <Badge variant="outline" className={event.action.startsWith("security") ? "border-rose-200 bg-rose-50 text-rose-700" : ""}>
+                      <Badge variant="outline" className={event.action.startsWith("security") || event.action.startsWith("error") ? "border-rose-200 bg-rose-50 text-rose-700" : ""}>
                         {event.action}
                       </Badge>
+                      {typeof event.metadata?.request_id === "string" && (
+                        <p className="mt-1 max-w-[180px] break-all font-mono text-[10px] text-slate-500">
+                          {event.metadata.request_id}
+                        </p>
+                      )}
                     </td>
                     <td className="py-3 pr-4 text-slate-600">
                       {event.target_type ?? "—"}

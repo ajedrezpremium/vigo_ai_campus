@@ -68,7 +68,7 @@ Navegador
 - **Modo demo**: el visitante es `estudiante`. Solo `DEMO_ADMIN=true` (local) abre `/admin`.
 - **Webhooks**: HMAC SHA-256 con `timingSafeEqual`.
 - **Secretos**: `SUPABASE_SERVICE_ROLE_KEY` y `LLM_API_KEY` solo en servidor; nunca en `NEXT_PUBLIC_*`.
-- **Tests**: `tests/security.test.ts` cubre inyección, URLs, HMAC, rate limit, roles, RAG y compositor.
+- **Tests**: `tests/security.test.ts` cubre inyección, URLs, HMAC, rate limit, roles, RAG y compositor; `tests/observability.test.ts` cubre request ids, buffer, aislamiento por organización y DSN. Total: 30.
 
 ## 4. Operación
 
@@ -88,6 +88,20 @@ Fuentes en `scripts/ingest-uvigo.mjs`. Para añadir una página, añade un objet
 
 `GET /api/llm/status` devuelve proveedor, etiqueta de clave, cuota free, modelos y último error. No devuelve secretos.
 
+### Observabilidad
+
+| Pieza | Responsabilidad |
+|---|---|
+| `proxy.ts` | Asigna `x-request-id` a toda petición (salvo assets) y lo devuelve en la respuesta. Solo consulta Supabase para `/admin`, `/solicitudes`, `/app` y `/login`. |
+| `lib/observability/core.ts` | Logs JSON, buffer en memoria (200 eventos), `describeDsn`/`forwardToSentry` y `toErrorAuditRow`. No importa Supabase (apto para edge). |
+| `lib/observability/server.ts` | `reportServerError()` persiste en `audit_events` (`action = "error.http"`) y `errorResponse()` devuelve 5xx con `requestId`. |
+| `instrumentation.ts` | `onRequestError` de Next para errores no capturados en rutas, RSC y Server Actions. |
+
+- Los 5xx de `/api/chat`, `/api/tickets` y `/api/auth/provision` llaman a `reportServerError()`; el cliente recibe un mensaje genérico, el `requestId` y la cabecera `X-Request-Id`.
+- `SENTRY_DSN` activa el reenvío directo al endpoint de ingesta de Sentry, sin instalar el SDK; es *best-effort* y nunca bloquea la respuesta. `SENTRY_ENVIRONMENT` etiqueta el entorno.
+- `getRecentAudit()` fusiona los errores del proceso con las filas de Supabase y deduplica por `target_id`; con organización solo muestra su tenant, y en modo demo solo los eventos sin organización.
+- Para depurar: busca el `requestId` en los logs JSON del servidor, en `audit_events.metadata` o en Sentry.
+
 ### Cron
 
 `vercel.json` programa `/api/cron/uvigo-sync` a las 03:00 UTC. Requiere `CRON_SECRET`. Hace HEAD a cada fuente y registra `uvigo.sync` en auditoría.
@@ -106,7 +120,7 @@ Fuentes en `scripts/ingest-uvigo.mjs`. Para añadir una página, añade un objet
 - Movimiento: `prefers-reduced-motion` desactiva Ken Burns y transiciones largas.
 - Teclado: todos los controles son `<button>`, `<a>`, `<select>` o `<textarea>` con foco visible.
 
-Pendiente: auditoría automatizada con `@axe-core/playwright` y revisión con lector de pantalla real.
+Auditoría automatizada: `e2e/a11y.spec.ts` ejecuta axe (`@axe-core/playwright`) sobre portada, plataforma, precios, contacto, login y chat, y comprueba el renderizado en inglés. Solo bloquean las violaciones `critical` y `serious`; el job `npm run test:a11y` corre en CI después del build. Pendiente: revisión con lector de pantalla real.
 
 ## 6. i18n
 
@@ -144,5 +158,5 @@ Webhook: `POST /api/webhooks/uvigo` con cabecera `x-uvigo-signature: sha256=<hma
 2. Configurar Upstash Redis para rate limiting distribuido (opcional; hay fallback a memoria).
 3. Configurar SSO SAML/OIDC con la UVigo.
 4. Firmar convenio para endpoints SEDE/Secretaría/Campus Remoto.
-5. Auditoría axe y revisión con lector de pantalla real (el i18n ya está completo).
+5. Revisión manual con lector de pantalla real (la auditoría axe ya está en CI).
 6. Sustituir el corpus estático por `pgvector` cuando el volumen crezca.

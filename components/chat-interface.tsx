@@ -332,7 +332,7 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
               </span>
               <div>
                 <p className="text-sm font-semibold">Superagente</p>
-                <p className="text-[11px] text-emerald-600">● {copy.online}</p>
+                <p className="text-[11px] text-emerald-700">● {copy.online}</p>
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={newConversation} className="lg:hidden">
@@ -477,7 +477,7 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
                   className="min-h-[48px] resize-none"
                   disabled={loading}
                 />
-                <p className={cn("mt-1 text-right text-[10px]", input.length > 1900 ? "text-amber-600" : "text-slate-400")}>
+                <p className={cn("mt-1 text-right text-[10px]", input.length > 1900 ? "text-amber-700" : "text-slate-500")}>
                   {input.length}/2000 {copy.chars}
                 </p>
               </div>

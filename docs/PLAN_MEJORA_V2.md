@@ -12,7 +12,7 @@ Actualizado: 2026-10-27.
 |---|---|---|
 | **Fase 0** — desbloquear CI y regresiones | ✅ Completada | `next.config.ts` sin loader inexistente; `language-switcher` tipado; rutas de historial/solicitudes enlazadas; `proxy.ts` sustituye a `middleware.ts`; 500 sin detalle interno; 0 warnings de lint; `tsc` limpio; `build` verde. |
 | **Fase 1** — seguridad y multi-tenant | ✅ Completada | Modo demo *fail-closed* (`lib/tenant.ts`), filtro `organization_id` en métricas/auditoría, `organization_id` en `recordMetric`, bootstrap de admin solo con `ADMIN_EMAILS`, rate limit con Upstash opcional, 7 tests nuevos (18 en total). |
-| **Fase 2** — producto y calidad | 🟡 Parcial | Feedback 👍/👎 ya existía en el chat; añadidos `error.tsx`, `not-found.tsx` y `loading.tsx`. i18n completo ES/GL/EN con cookie y renderizado en servidor (#14). Pendiente: axe y observabilidad externa. |
+| **Fase 2** — producto y calidad | ✅ Completada | Feedback 👍/👎 ya existía en el chat; añadidos `error.tsx`, `not-found.tsx` y `loading.tsx`. i18n completo ES/GL/EN con cookie y renderizado en servidor (#14). Auditoría axe en 6 páginas + locale (#15): 7/7 en verde. Observabilidad con `requestId`, logs JSON, persistencia en `audit_events` y Sentry opcional (#16): 12 tests nuevos (30 en total) y smoke test E2E verificado. |
 | **Fase 3** — IA y datos | ⏳ Pendiente | pgvector, ingesta incremental, set de evaluación, streaming. |
 
 Decisión de rutas: se mantuvieron `/historial` y `/solicitudes` en la raíz (trabajo ya iniciado) y se actualizaron el dashboard y el proxy, en lugar de devolverlas a `/app`. `/solicitudes` exige sesión; `/historial` es local al navegador.
@@ -38,6 +38,31 @@ Verificación de la fase 0+1: `lint`, `tsc`, `test` (18/18) y `build` en verde; 
 /app        200      /solicitudes    307 → /login
 /historial  200      /api/metrics    403
 /app/chat   200      /api/audit      403
+```
+
+Verificación de la fase 2 (`npm run test:a11y` sobre `next start`, 7/7 en verde):
+
+```
+/            portada       0 violaciones critical/serious
+/plataforma  plataforma    0
+/precios     precios       0
+/contacto    contacto      0
+/login       login         0
+/demo        chat          0
+/plataforma  locale=en     html lang="en", H1 "Platform"
+```
+
+Correcciones aplicadas en lugar de exclusiones: contraste de las tarjetas de agentes (`opacity-80` retirado), `emerald-600` → `700`, `slate-400` → `500`; se quitó el `aria-label` redundante del logo y el botón flotante usa el icono `Sparkles` con su texto visible en el nombre accesible.
+
+Smoke test de observabilidad con un 5xx real (`/api/dev-boom`, ruta temporal ya eliminada):
+
+```
+GET /api/dev-boom  x-request-id: smoke-observability-3  → 500
+GET /api/audit                                         → 200
+evento: action=error.http, target_id=smoke-observability-3,
+        metadata.request_id=smoke-observability-3, status=500, route=/api/dev-boom (route)
+
+Sin sesión y con Supabase configurado, /api/audit sigue devolviendo 403 (fail-closed).
 ```
 
 ## 1. Diagnóstico verificado
@@ -124,8 +149,8 @@ Objetivo: que el modo demo no sea una puerta trasera y que cada organización ve
 - [ ] Persistencia real de conversaciones: recuperar mensajes al abrir una conversación, no solo el título.
 - [ ] Feedback en la UI (hoy `/api/feedback` existe pero no se usa).
 - [x] **#14** i18n: diccionario único por página + cookie `vigo-locale`, `html lang` correcto en servidor y metadatos traducidos. Se descartaron las rutas `/[locale]/...` para no reestructurar 20 rutas (ver nota de decisión). Textos legales revisados.
-- [ ] **#15** `@axe-core/playwright` en 5 páginas + chat; corregir violaciones.
-- [ ] **#16** Observabilidad: Sentry (o equivalente) + logs estructurados con `requestId`; alerta de 5xx y de cuota LLM.
+- [x] **#15** `@axe-core/playwright` en 6 páginas + chat + comprobación de locale; violaciones críticas corregidas (7/7 en verde, job en CI).
+- [x] **#16** Observabilidad: logs JSON con `requestId`, buffer en memoria, persistencia best-effort en `audit_events` y reenvío opcional a Sentry vía `SENTRY_DSN` (sin SDK); `onRequestError` de Next cubre los errores no capturados.
 - [ ] Estados vacíos y *skeletons* en admin y chat; `error.tsx` y `not-found.tsx` propios.
 - [ ] Rendimiento: revisar peso de imágenes del hero, `next/font` local y presupuesto de JS.
 
@@ -200,9 +225,9 @@ Una tarea se considera terminada cuando:
 
 ## 7. Próximos tres pasos
 
-1. **Hoy:** Fase 0 completa (build, tipos, rutas, proxy). Es lo que desbloquea todo lo demás.
-2. **Después:** Fase 1, empezando por B9 y B10 (seguridad y aislamiento), con B13 como red de seguridad.
-3. **Revisión:** volver a ejecutar las cuatro comprobaciones y actualizar la tabla de la sección 1 con el estado real.
+1. **Hecho:** Fases 0, 1 y 2 completas (build, tipos, rutas, proxy, i18n, axe y observabilidad).
+2. **Después:** Fase 3, empezando por B20 (pgvector) y B21 (set de evaluación); B22 (streaming) al final para no complicar el *fallback*.
+3. **Revisión:** volver a ejecutar `npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run build` y `npm run test:a11y`, y actualizar la tabla de la sección 0.
 
 ---
 
@@ -213,6 +238,7 @@ npm run lint
 npx tsc --noEmit
 npm test
 npm run build
+npm run test:a11y   # requiere build previo y chromium
 ```
 
-Estado actual: `lint` 0 errores / 5 warnings · `tsc` 1 error · `test` 11/11 · `build` falla.
+Estado actual: `lint` 0 errores / 0 warnings · `tsc` limpio · `test` 30/30 · `build` verde · `test:a11y` 7/7.

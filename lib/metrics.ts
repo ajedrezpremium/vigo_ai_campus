@@ -1,4 +1,5 @@
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getMemoryErrorEvents, toErrorAuditRow } from "@/lib/observability/core";
 
 export type MetricEvent = {
   id: string;
@@ -258,15 +259,39 @@ export async function getRecentAudit(
   client: ReturnType<typeof getSupabaseAdminClient> = getSupabaseAdminClient(),
 ) {
   const admin = client;
-  if (!admin || !organizationId) return [];
+  const tenant = organizationId ?? null;
+
+  // Errores 5xx del proceso actual: se muestran aunque no haya Supabase
+  // (modo demo) y se deduplican con las filas ya persistidas.
+  const memoryRows = getMemoryErrorEvents(limit, tenant).map((event) => {
+    const row = toErrorAuditRow(event);
+    return {
+      id: `mem-${event.requestId}`,
+      created_at: event.at,
+      action: row.action,
+      target_type: row.target_type,
+      target_id: row.target_id,
+      metadata: row.metadata as Record<string, unknown>,
+      organization_id: row.organization_id,
+    };
+  });
+
+  if (!admin || !tenant) return memoryRows.slice(0, limit);
+
   const { data, error } = await admin
     .from("audit_events")
     .select("id, created_at, action, target_type, target_id, metadata, organization_id")
-    .eq("organization_id", organizationId)
+    .eq("organization_id", tenant)
     .order("created_at", { ascending: false })
     .limit(limit);
-  if (error) return [];
-  return data ?? [];
+  if (error) return memoryRows.slice(0, limit);
+
+  const seen = new Set(memoryRows.map((row) => row.target_id));
+  const persisted = (data ?? []).filter((row) => !seen.has(row.target_id));
+
+  return [...memoryRows, ...persisted]
+    .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+    .slice(0, limit);
 }
 
 export function getMemoryMetricCount() {
