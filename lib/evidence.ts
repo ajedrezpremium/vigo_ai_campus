@@ -59,6 +59,10 @@ export function evidenceCoverage(query: string, chunks: RetrievedChunk[]): numbe
 /**
  * Decide si hay evidencia suficiente para responder. La usan tanto la ruta de
  * chat como el arnés de evaluación, para que lo medido sea lo que se publica.
+ *
+ * La similitud semántica NO sustituye a esta comprobación: en el set de
+ * evaluación hay consultas fuera de alcance con similitud 0,56 y preguntas
+ * válidas con 0,44, así que un umbral de coseno no separa ambas con seguridad.
  */
 export function shouldAbstain(query: string, chunks: RetrievedChunk[]): boolean {
   if (!chunks.length) return true;

@@ -1,0 +1,283 @@
+{
+  "generatedAt": "2026-10-27T05:25:58.241Z",
+  "model": "openai/text-embedding-3-small",
+  "dimensions": 1536,
+  "topK": 5,
+  "semanticThreshold": 0.2,
+  "questions": 12,
+  "lexical": {
+    "recallAt1": 0.083,
+    "recallAt5": 0.333,
+    "mrr": 0.144
+  },
+  "hybrid": {
+    "recallAt1": 0.75,
+    "recallAt5": 1,
+    "mrr": 0.825
+  },
+  "items": [
+    {
+      "id": "papeles-curso",
+      "question": "¿Qué papeles tengo que llevar para empezar el curso en una titulación?",
+      "locale": "es",
+      "expected": [
+        "uvigo-matricula-grado",
+        "uvigo-matricula"
+      ],
+      "lexical": [
+        "uvigo-becas",
+        "uvigo-cronograma-2026-27-pdf",
+        "uvigo-acceder",
+        "uvigo-calendario-2026-27-pdf",
+        "uvigo-matricula-grado"
+      ],
+      "hybrid": [
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-becas",
+        "uvigo-cronograma-2026-27-pdf"
+      ],
+      "lexicalRank": 5,
+      "hybridRank": 1
+    },
+    {
+      "id": "coste-estudios",
+      "question": "Mi familia no puede asumir el coste de los estudios, ¿qué ayudas hay?",
+      "locale": "es",
+      "expected": [
+        "uvigo-becas"
+      ],
+      "lexical": [
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-movilidad",
+        "uvigo-matricula-master"
+      ],
+      "hybrid": [
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-perfil-estudiantes",
+        "uvigo-movilidad"
+      ],
+      "lexicalRank": 1,
+      "hybridRank": 1
+    },
+    {
+      "id": "carrera-otro-pais",
+      "question": "Quiero cursar una parte de la carrera en otro país, ¿qué opciones tengo?",
+      "locale": "es",
+      "expected": [
+        "uvigo-movilidad"
+      ],
+      "lexical": [
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-movilidad",
+        "uvigo-matricula-grado",
+        "uvigo-movilidad"
+      ],
+      "hybrid": [
+        "uvigo-matricula-grado",
+        "uvigo-movilidad",
+        "uvigo-movilidad",
+        "uvigo-becas",
+        "uvigo-becas"
+      ],
+      "lexicalRank": 3,
+      "hybridRank": 2
+    },
+    {
+      "id": "sacar-libros",
+      "question": "¿Dónde puedo sacar libros en préstamo?",
+      "locale": "es",
+      "expected": [
+        "uvigo-biblioteca"
+      ],
+      "lexical": [
+        "uvigo-institucional"
+      ],
+      "hybrid": [
+        "uvigo-biblioteca",
+        "uvigo-biblioteca",
+        "uvigo-biblioteca",
+        "uvigo-institucional",
+        "uvigo-perfil-estudiantes"
+      ],
+      "lexicalRank": null,
+      "hybridRank": 1
+    },
+    {
+      "id": "portatil-wifi",
+      "question": "¿A quién aviso si mi portátil no se conecta a la red del campus?",
+      "locale": "es",
+      "expected": [
+        "uvigo-tic"
+      ],
+      "lexical": [
+        "uvigo-perfil-estudiantes",
+        "uvigo-campus",
+        "uvigo-campus",
+        "uvigo-biblioteca",
+        "uvigo-biblioteca"
+      ],
+      "hybrid": [
+        "uvigo-perfil-estudiantes",
+        "uvigo-biblioteca",
+        "uvigo-campus",
+        "uvigo-campus",
+        "uvigo-tic"
+      ],
+      "lexicalRank": null,
+      "hybridRank": 5
+    },
+    {
+      "id": "orientacion",
+      "question": "¿Hay algún servicio donde me orienten sobre qué estudiar?",
+      "locale": "es",
+      "expected": [
+        "uvigo-asesoramiento"
+      ],
+      "lexical": [
+        "uvigo-tic",
+        "uvigo-becas",
+        "uvigo-tic",
+        "uvigo-tic",
+        "uvigo-perfil-estudiantes"
+      ],
+      "hybrid": [
+        "uvigo-tic",
+        "uvigo-becas",
+        "uvigo-tic",
+        "uvigo-becas",
+        "uvigo-asesoramiento"
+      ],
+      "lexicalRank": null,
+      "hybridRank": 5
+    },
+    {
+      "id": "axuda-economica",
+      "question": "Onde podo pedir axuda económica para pagar a matrícula?",
+      "locale": "gl",
+      "expected": [
+        "uvigo-becas",
+        "uvigo-matricula"
+      ],
+      "lexical": [
+        "uvigo-matricula-doctorado",
+        "uvigo-matricula-doctorado",
+        "uvigo-matricula-master",
+        "uvigo-matricula-grado",
+        "uvigo-matricula"
+      ],
+      "hybrid": [
+        "uvigo-matricula",
+        "uvigo-becas",
+        "uvigo-perfil-estudiantes",
+        "uvigo-matricula-doctorado",
+        "uvigo-matricula-doctorado"
+      ],
+      "lexicalRank": 5,
+      "hybridRank": 1
+    },
+    {
+      "id": "praza-mestrado",
+      "question": "Como consigo unha praza nun mestrado?",
+      "locale": "gl",
+      "expected": [
+        "uvigo-matricula-master"
+      ],
+      "lexical": [
+        "uvigo-calendario-2026-27-pdf"
+      ],
+      "hybrid": [
+        "uvigo-matricula-master",
+        "uvigo-matricula-master",
+        "uvigo-matricula-master",
+        "uvigo-calendario-2026-27-pdf",
+        "uvigo-matricula-doctorado"
+      ],
+      "lexicalRank": null,
+      "hybridRank": 1
+    },
+    {
+      "id": "register-degree",
+      "question": "How do I register for a bachelor's degree?",
+      "locale": "en",
+      "expected": [
+        "uvigo-matricula-grado",
+        "uvigo-matricula"
+      ],
+      "lexical": [],
+      "hybrid": [
+        "uvigo-matricula",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado"
+      ],
+      "lexicalRank": null,
+      "hybridRank": 1
+    },
+    {
+      "id": "borrow-books",
+      "question": "Where can I borrow books?",
+      "locale": "en",
+      "expected": [
+        "uvigo-biblioteca"
+      ],
+      "lexical": [],
+      "hybrid": [
+        "uvigo-biblioteca",
+        "uvigo-biblioteca",
+        "uvigo-biblioteca",
+        "uvigo-perfil-estudiantes",
+        "uvigo-becas"
+      ],
+      "lexicalRank": null,
+      "hybridRank": 1
+    },
+    {
+      "id": "financial-aid",
+      "question": "I need financial aid to pay my tuition",
+      "locale": "en",
+      "expected": [
+        "uvigo-becas"
+      ],
+      "lexical": [],
+      "hybrid": [
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-perfil-estudiantes"
+      ],
+      "lexicalRank": null,
+      "hybridRank": 1
+    },
+    {
+      "id": "laptop-wifi",
+      "question": "Who should I contact if my laptop cannot connect to the campus Wi-Fi?",
+      "locale": "en",
+      "expected": [
+        "uvigo-tic"
+      ],
+      "lexical": [
+        "uvigo-campus",
+        "uvigo-campus",
+        "uvigo-conocenos",
+        "uvigo-vistazo",
+        "uvigo-biblioteca"
+      ],
+      "hybrid": [
+        "uvigo-tic",
+        "uvigo-tic",
+        "uvigo-biblioteca",
+        "uvigo-campus",
+        "uvigo-campus"
+      ],
+      "lexicalRank": null,
+      "hybridRank": 1
+    }
+  ]
+}

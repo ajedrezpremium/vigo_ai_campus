@@ -11,6 +11,9 @@
     "test:a11y": "playwright test",
     "eval": "tsx scripts/eval.ts",
     "eval:llm": "node --env-file=.env.local --import tsx scripts/eval.ts --llm",
+    "eval:paraphrase": "tsx scripts/eval-paraphrases.ts",
+    "embed:corpus": "tsx scripts/embed-corpus.ts",
+    "semantic:status": "tsx scripts/semantic-status.ts",
     "ingest:uvigo": "node scripts/ingest-uvigo.mjs",
     "check:security": "npm test"
   },

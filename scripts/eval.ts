@@ -1,3 +1,5 @@
+import "./load-env";
+
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { runEvaluation } from "../lib/evaluation";
@@ -10,13 +12,14 @@ function arg(name: string) {
 
 async function main() {
   const useLLM = process.argv.includes("--llm");
+  const useSemantic = process.argv.includes("--semantic");
   const limit = arg("limit") ? Number(arg("limit")) : undefined;
   const out = resolve(arg("out") ?? "eval/results/latest.json");
 
-  const report = await runEvaluation({ useLLM, limit });
+  const report = await runEvaluation({ useLLM, useSemantic, limit });
   const { summary, items } = report;
 
-  console.log(`\nEvaluación VIGO AI CAMPUS · prompt ${summary.promptVersion} · modo ${summary.mode}${summary.partial ? " · muestra parcial" : ""}`);
+  console.log(`\nEvaluación VIGO AI CAMPUS · prompt ${summary.promptVersion} · modo ${summary.mode} · retrieval ${summary.retrieval}${summary.partial ? " · muestra parcial" : ""}`);
   console.log(`Preguntas: ${summary.questions} (${summary.answerable} respondibles, ${summary.unanswerable} de abstención)\n`);
   console.log(`Retrieval recall      ${summary.retrievalRecall.toFixed(3)}  (min ${summary.thresholds.retrievalRecall})`);
   console.log(`Cobertura respuestas  ${summary.answerCoverage.toFixed(3)}  (min ${summary.thresholds.answerCoverage})`);

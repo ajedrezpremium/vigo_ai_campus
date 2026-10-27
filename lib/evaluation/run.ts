@@ -4,6 +4,7 @@ import { evidenceCoverage, shouldAbstain } from "@/lib/evidence";
 import { callLLM } from "@/lib/llm";
 import { buildChatSystemPrompt, buildChatUserPrompt, CHAT_PROMPT_VERSION } from "@/lib/prompts";
 import { retrieve, retrievalConfidence, tokenize, topScore } from "@/lib/retrieval";
+import { retrieveAsync } from "@/lib/retrieval-hybrid";
 import { EVAL_QUESTIONS, type EvalQuestion } from "./dataset";
 
 const OFFICIAL_HOST = "https://www.uvigo.gal/";
@@ -45,6 +46,7 @@ export type EvalSummary = {
   promptVersion: string;
   generatedAt: string;
   mode: "composer" | "llm";
+  retrieval: "lexical" | "hybrid";
   partial: boolean;
   questions: number;
   answerable: number;
@@ -145,9 +147,15 @@ export function extractUrls(text: string): string[] {
   return text.match(/https?:\/\/[^\s)]+/g) ?? [];
 }
 
-async function answerQuestion(question: EvalQuestion, useLLM: boolean) {
+async function answerQuestion(question: EvalQuestion, useLLM: boolean, useSemantic: boolean) {
   const startedAt = Date.now();
-  const chunks = retrieve(question.question, { topK: 5, locale: question.locale, includeDemo: false });
+  const chunks = useSemantic
+    ? await retrieveAsync(question.question, {
+        topK: 5,
+        locale: question.locale,
+        includeDemo: false,
+      })
+    : retrieve(question.question, { topK: 5, locale: question.locale, includeDemo: false });
   const confidence = retrievalConfidence(chunks);
   const score = topScore(chunks);
   const coverage = evidenceCoverage(question.question, chunks);
@@ -231,13 +239,19 @@ async function answerQuestion(question: EvalQuestion, useLLM: boolean) {
   };
 }
 
-export async function runEvaluation(options: { useLLM?: boolean; limit?: number; now?: Date } = {}): Promise<EvalReport> {
+export async function runEvaluation(options: {
+  useLLM?: boolean;
+  useSemantic?: boolean;
+  limit?: number;
+  now?: Date;
+} = {}): Promise<EvalReport> {
   const useLLM = options.useLLM ?? false;
+  const useSemantic = options.useSemantic ?? false;
   const questions = EVAL_QUESTIONS.slice(0, options.limit ?? EVAL_QUESTIONS.length);
   const items: EvalItem[] = [];
 
   for (const question of questions) {
-    const result = await answerQuestion(question, useLLM);
+    const result = await answerQuestion(question, useLLM, useSemantic);
     const retrieved = result.chunks.map((chunk) => chunk.documentId);
     const retrievalHit =
       question.expectation === "answer" && question.documents.some((documentId) => retrieved.includes(documentId));
@@ -292,6 +306,7 @@ export async function runEvaluation(options: { useLLM?: boolean; limit?: number;
     promptVersion: CHAT_PROMPT_VERSION,
     generatedAt: (options.now ?? new Date()).toISOString(),
     mode: useLLM ? "llm" : "composer",
+    retrieval: useSemantic ? "hybrid" : "lexical",
     partial: items.length < EVAL_QUESTIONS.length,
     questions: items.length,
     answerable: answerable.length,

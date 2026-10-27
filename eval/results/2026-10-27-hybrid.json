@@ -1,0 +1,904 @@
+{
+  "summary": {
+    "promptVersion": "2026-10-27.1",
+    "generatedAt": "2026-10-27T05:26:24.170Z",
+    "mode": "composer",
+    "retrieval": "hybrid",
+    "partial": false,
+    "questions": 30,
+    "answerable": 22,
+    "unanswerable": 8,
+    "retrievalRecall": 1,
+    "answerCoverage": 1,
+    "abstentionAccuracy": 1,
+    "citationValidity": 1,
+    "expectedCitationRate": 1,
+    "faithfulness": 1,
+    "lexicalGrounding": 1,
+    "latencyP50Ms": 589,
+    "latencyP95Ms": 813,
+    "latencyMaxMs": 1798,
+    "thresholds": {
+      "retrievalRecall": 0.85,
+      "answerCoverage": 0.85,
+      "abstentionAccuracy": 0.9,
+      "citationValidity": 0.95,
+      "expectedCitationRate": 0.8,
+      "faithfulness": 0.9,
+      "latencyP95Ms": 4000
+    },
+    "passed": true
+  },
+  "items": [
+    {
+      "id": "matricula-grado",
+      "question": "¿Cómo me matriculo en un grado de la UVigo?",
+      "expectation": "answer",
+      "tags": [
+        "matricula"
+      ],
+      "retrieved": [
+        "uvigo-matricula-grado",
+        "uvigo-matricula",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-master"
+      ],
+      "confidence": 1,
+      "score": 47.61,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 1798,
+      "answerChars": 1846,
+      "answerPreview": "## Resumen\n\nAccede a este enlace si vas a iniciar estudios de grado y realizaste la preinscripción en el Nerta de acuerdo con el calendario de llamamientos de la CiUG o si tienes una admisión para iniciar estudios por reconocimiento de créditos, curso puente o bien por obtener una plaza vacante. Si continúas estudios en la Universidade de Vigo y ya tienes acceso al portal académico utiliza del siguiente enlace del 20 de agosto al 11 de septiembre de 2026:\n\n## Puntos clave\n\n- 1.º plazo de modific"
+    },
+    {
+      "id": "matricula-master",
+      "question": "¿Cuál es el procedimiento de matrícula de un máster?",
+      "expectation": "answer",
+      "tags": [
+        "matricula"
+      ],
+      "retrieved": [
+        "uvigo-matricula-master",
+        "uvigo-matricula-master",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado"
+      ],
+      "confidence": 1,
+      "score": 48.28,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 601,
+      "answerChars": 1230,
+      "answerPreview": "## Resumen\n\nInicio de estudios: preinscripción y matrícula en el curso 2026/2027 ¿Necesitas ayuda para preinscribirte?\n\n## Puntos clave\n\n- Si necesitas solicitar un visado o alguna documentación para estudiar en la Universidade de Vigo durante el curso 2026/2027, puedes solicitar una carta de admisión en estudios de máster o de doctorado.\n- El plazo para solicitarla estará abierto hasta el 20 de junio de 2026.\n- Una vez realizada la solicitud, recibirás una respuesta en un plazo máximo de 10 día"
+    },
+    {
+      "id": "matricula-doctorado",
+      "question": "¿Cómo me matriculo en un programa de doctorado?",
+      "expectation": "answer",
+      "tags": [
+        "matricula"
+      ],
+      "retrieved": [
+        "uvigo-matricula-doctorado",
+        "uvigo-matricula-doctorado",
+        "uvigo-matricula-doctorado",
+        "uvigo-matricula",
+        "uvigo-matricula-master"
+      ],
+      "confidence": 1,
+      "score": 56.24,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 589,
+      "answerChars": 1355,
+      "answerPreview": "## Resumen\n\nSegundo plazo de preinscripción y de matrícula del curso 2025/2026 Preinscripción: del 1 al 8 de septiembre de 2026\n\n## Puntos clave\n\n- Si necesitas solicitar un visado o alguna documentación para estudiar en la Universidade de Vigo durante el curso 2026/2027, puedes solicitar una carta de admisión en estudios de máster o de doctorado.\n- El plazo para solicitarla estará abierto hasta el 20 de junio de 2026.\n- Una vez realizada la solicitud, recibirás una respuesta en un plazo máximo "
+    },
+    {
+      "id": "becas",
+      "question": "¿Qué becas y ayudas puedo solicitar como estudiante?",
+      "expectation": "answer",
+      "tags": [
+        "becas"
+      ],
+      "retrieved": [
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-movilidad",
+        "uvigo-movilidad"
+      ],
+      "confidence": 1,
+      "score": 67.98,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 668,
+      "answerChars": 1505,
+      "answerPreview": "## Resumen\n\nEncuentra toda la información sobre las becas que pueden ayudarte a financiar tu carrera universitaria y los trámites asociados. Nuestro objetivo es que nadie se quede excluído de la enseñanza superior por razones económicas.\n\n## Puntos clave\n\n- En el menú de la derecha encontrarás todas las convocatorias que te puedan interesar de la UVigo y de otros organismos (MEFP, Xunta de Galicia...).\n- Encontrarás información de interés sobre protección de datos en las convocatorias de becas e"
+    },
+    {
+      "id": "calendario",
+      "question": "¿Dónde consulto el calendario académico?",
+      "expectation": "answer",
+      "tags": [
+        "calendario"
+      ],
+      "retrieved": [
+        "uvigo-calendario",
+        "uvigo-calendario",
+        "uvigo-calendario",
+        "uvigo-calendario-2026-27-pdf",
+        "uvigo-calendario-2026-27-pdf"
+      ],
+      "confidence": 1,
+      "score": 53.62,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 622,
+      "answerChars": 1056,
+      "answerPreview": "## Resumen\n\nCalendario del curso académico 2026/2027 Calendario académico del curso 2026/2027\n\n## Puntos clave\n\n- Calendario académico del curso 2026/2027 del Centro Universitario de la Defensa\n- Calendario del curso académico 2025/2026\n- Calendario académico do curso 2025/2026 modificado\n- Calendario académico del curso 2025/2026\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar plazos y requisitos.\n- Ten a mano tu expediente o identificador del trámite antes de contactar.\n"
+    },
+    {
+      "id": "curso-2026-27",
+      "question": "¿Cuándo empieza el curso 2026/2027?",
+      "expectation": "answer",
+      "tags": [
+        "calendario"
+      ],
+      "retrieved": [
+        "uvigo-cronograma-2026-27-pdf",
+        "uvigo-calendario-2026-27-pdf",
+        "uvigo-calendario-2026-27-pdf",
+        "uvigo-calendario-2026-27-pdf",
+        "uvigo-calendario"
+      ],
+      "confidence": 0.62,
+      "score": 19.28,
+      "coverage": 0.75,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 605,
+      "answerChars": 1299,
+      "answerPreview": "## Resumen\n\n19 decembro a 8 xaneiro: NadalInicio07 Setembro 25 Xaneiro 29 xaneiro: Sto.\n\n## Puntos clave\n\n- CALENDARIO ACADÉMICO DO CURSO 2026-2027 (aprobado no Consello de Goberno do 25 de marzo do 2026) 1.\n- O curso académico comprenderá do 1 de setembro de 2026 ao 31 de agosto de 2027.\n- Calendario del curso académico 2026/2027\n- Calendario académico del curso 2026/2027\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar plazos y requisitos.\n- Ten a mano tu expediente o ide"
+    },
+    {
+      "id": "acceso",
+      "question": "¿Cómo puedo acceder a la Universidade de Vigo?",
+      "expectation": "answer",
+      "tags": [
+        "acceso"
+      ],
+      "retrieved": [
+        "uvigo-acceder",
+        "uvigo-estudiar",
+        "uvigo-vistazo",
+        "uvigo-institucional",
+        "uvigo-institucional"
+      ],
+      "confidence": 0.83,
+      "score": 23.78,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 589,
+      "answerChars": 1275,
+      "answerPreview": "## Resumen\n\nPodrás acceder a la universidad si dispones de alguna titulación o si realizaste una prueba de acceso. En esta sección encontrarás toda la información de acceso a los grados, másteres, doctorados o al Programa de mayores, sea cual sea tu perfil.\n\n## Puntos clave\n\n- Las titulaciones de grado, máster y el Programa universitario de mayores ofertan un número limitado de plazas para el alumnado de primer curso.\n- Por eso antes de hacer la matrícula, debes realizar una solicitud de admisió"
+    },
+    {
+      "id": "grados",
+      "question": "¿Qué estudios de grado ofrece la UVigo?",
+      "expectation": "answer",
+      "tags": [
+        "estudios"
+      ],
+      "retrieved": [
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-becas",
+        "uvigo-grados"
+      ],
+      "confidence": 1,
+      "score": 17.88,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 575,
+      "answerChars": 1846,
+      "answerPreview": "## Resumen\n\nAccede a este enlace si vas a iniciar estudios de grado y realizaste la preinscripción en el Nerta de acuerdo con el calendario de llamamientos de la CiUG o si tienes una admisión para iniciar estudios por reconocimiento de créditos, curso puente o bien por obtener una plaza vacante. Si continúas estudios en la Universidade de Vigo y ya tienes acceso al portal académico utiliza del siguiente enlace del 20 de agosto al 11 de septiembre de 2026:\n\n## Puntos clave\n\n- 1.º plazo de modific"
+    },
+    {
+      "id": "historia",
+      "question": "Historia de la Universidade de Vigo",
+      "expectation": "answer",
+      "tags": [
+        "institucional"
+      ],
+      "retrieved": [
+        "uvigo-vistazo",
+        "uvigo-institucional",
+        "uvigo-conocenos",
+        "uvigo-vistazo",
+        "uvigo-vistazo"
+      ],
+      "confidence": 0.75,
+      "score": 15.7,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 588,
+      "answerChars": 2000,
+      "answerPreview": "## Resumen\n\nNacimos en 1990 y, desde entonces, hemos mantenido un constante crecimiento y consolidación. Somos una universidad de vanguardia, con la excelencia como objetivo y que está creciendo como una referencia internacional en la innovación y en la investigación.\n\n## Puntos clave\n\n- La Universidade de Vigo es una universidad pública, con autonomía académica, económica y de gobierno, que se sitúa al servicio de la sociedad bajo los principios de la igualdad, la solidaridad, la democracia y l"
+    },
+    {
+      "id": "biblioteca",
+      "question": "¿Qué servicios ofrece la Biblioteca universitaria?",
+      "expectation": "answer",
+      "tags": [
+        "servicios"
+      ],
+      "retrieved": [
+        "uvigo-biblioteca",
+        "uvigo-biblioteca",
+        "uvigo-biblioteca",
+        "uvigo-tic",
+        "uvigo-tic"
+      ],
+      "confidence": 1,
+      "score": 70.3,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 643,
+      "answerChars": 1675,
+      "answerPreview": "## Resumen\n\nLa Biblioteca Universitaria ofrece un amplio conjunto de recursos de información, espacios y servicios para dar soporte a las actividades de aprendizaje, docencia e investigación Presente en los tres campus a través de una red formada por once bibliotecas coordinadas por la biblioteca central del campus de Vigo, la Biblioteca Universitaria forma parte del Vicerrectorado de Investigación.\n\n## Puntos clave\n\n- Aunque está dirigida principalmente a los miembros de la comunidad universita"
+    },
+    {
+      "id": "movilidad",
+      "question": "¿Cómo participo en un programa de movilidad internacional?",
+      "expectation": "answer",
+      "tags": [
+        "movilidad"
+      ],
+      "retrieved": [
+        "uvigo-movilidad",
+        "uvigo-movilidad",
+        "uvigo-movilidad",
+        "uvigo-becas",
+        "uvigo-perfil-pdi"
+      ],
+      "confidence": 0.67,
+      "score": 43.18,
+      "coverage": 0.75,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 565,
+      "answerChars": 1878,
+      "answerPreview": "## Resumen\n\nLos estudiantes de la Universidade de Vigo podrán participar en las diversas convocatorias de movilidad que la Oficina de Relaciones Internacionales (ORI) publica a lo largo del curso. Las convocatorias suelen publicarse el año anterior al curso académico que se disfrutará de intercambio.\n\n## Puntos clave\n\n- Es muy importante seguir todas las novedades de la ORI a través de sus comunicados.\n- El programa con mayor número de participantes es el programa Erasmus+, pero la Universidade "
+    },
+    {
+      "id": "tic",
+      "question": "¿Dónde consulto los servicios informáticos de la UVigo?",
+      "expectation": "answer",
+      "tags": [
+        "servicios"
+      ],
+      "retrieved": [
+        "uvigo-tic",
+        "uvigo-tic",
+        "uvigo-tic",
+        "uvigo-institucional",
+        "uvigo-perfil-pas"
+      ],
+      "confidence": 0.71,
+      "score": 31.81,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 632,
+      "answerChars": 1567,
+      "answerPreview": "## Resumen\n\nEs un área transversal a toda la institución y nuestros servicios son utilizados a diario por toda la comunidad universitaria. Detrás de dichos servicios hay un equipo humano implicado y motivado en la búsqueda de una mejora constante.\n\n## Puntos clave\n\n- El ATIC ofrece una plataforma completamente orientada a guiar y explicar cómo acceder y utilizar las infraestructuras y los recursos informáticos que pone a disposición de toda la comunidad universitaria.\n- Tenemos un servicio de ge"
+    },
+    {
+      "id": "centros",
+      "question": "¿Qué centros tiene la UVigo?",
+      "expectation": "answer",
+      "tags": [
+        "institucional"
+      ],
+      "retrieved": [
+        "uvigo-institucional",
+        "uvigo-centros",
+        "uvigo-calendario",
+        "uvigo-campus",
+        "uvigo-institucional"
+      ],
+      "confidence": 1,
+      "score": 5.84,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 595,
+      "answerChars": 1099,
+      "answerPreview": "## Resumen\n\nConócenos en profundidad para aprovechar al máximo tu relación con nosotros Encuentra toda la información sobre nuestra organización: institucional, administrativa, nuestro gobierno, los servicios, los planes y programas…\n\n## Puntos clave\n\n- un montón de información útil para sacar provecho de tus experiencias con la Universidade de Vigo.\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar plazos y requisitos.\n- Ten a mano tu expediente o identificador del trámite "
+    },
+    {
+      "id": "campus",
+      "question": "¿Qué puedo hacer en la vida del campus?",
+      "expectation": "answer",
+      "tags": [
+        "campus"
+      ],
+      "retrieved": [
+        "uvigo-campus",
+        "uvigo-campus",
+        "uvigo-perfil-estudiantes",
+        "uvigo-perfil-estudiantes",
+        "uvigo-asesoramiento"
+      ],
+      "confidence": 1,
+      "score": 34.3,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 558,
+      "answerChars": 1127,
+      "answerPreview": "## Resumen\n\nAlojamiento, restaurantes, deportes, cultura, servicios médicos… Todo lo que necesites, lo encontrarás en los campus de la UVigo\n\n## Puntos clave\n\n- Los campus de la Universidade de Vigo constituyen un entorno óptimo para desarrollar todos los elementos de la vida universitaria y ofrecen una amplia variedad de servicios para la comunidad universitaria como pueden ser las bibliotecas, las instalaciones deportivas, los comedores etc.\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlaz"
+    },
+    {
+      "id": "empleabilidad",
+      "question": "¿Qué servicios de empleabilidad y prácticas hay?",
+      "expectation": "answer",
+      "tags": [
+        "empleabilidad"
+      ],
+      "retrieved": [
+        "uvigo-empleabilidad",
+        "uvigo-estudiar",
+        "uvigo-movilidad",
+        "uvigo-empleabilidad",
+        "uvigo-tic"
+      ],
+      "confidence": 0.6,
+      "score": 25.79,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 671,
+      "answerChars": 1614,
+      "answerPreview": "## Resumen\n\nTrabajamos con el objetivo de facilitar que las personas tituladas afronten su futuro profesional con mayores garantías de éxito El Área de Empleo y Emprendemiento es una unidad de gestión tiene como objetivo fundamental impulsar, en colaboración con empresas, administraciones y otras instituciones, la empleabilidad del alumnado y personas tituladas de la Universidade de Vigo.\n\n## Puntos clave\n\n- El circuito de actividades gratuitas incluidas en el pasaporte de empleabilidad ofrece u"
+    },
+    {
+      "id": "normativa",
+      "question": "¿Dónde está el archivo de normativa académica?",
+      "expectation": "answer",
+      "tags": [
+        "normativa"
+      ],
+      "retrieved": [
+        "uvigo-normativa",
+        "uvigo-normativa",
+        "uvigo-institucional",
+        "uvigo-biblioteca",
+        "uvigo-institucional"
+      ],
+      "confidence": 0.75,
+      "score": 43.85,
+      "coverage": 0.67,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 602,
+      "answerChars": 1107,
+      "answerPreview": "## Resumen\n\nCon el fin de organizar y mantener actualizada la legislación que afecta a la actividad de la universidad, se pone a disposición de las personas usuarias un repositorio de normativa. En este repositorio puedes consultar la normativa según diferentes parámetros, por ejemplo:\n\n## Puntos clave\n\n- O realizar búsquedas con palabra clave, como «transparencia», «becas»…\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar plazos y requisitos.\n- Ten a mano tu expediente o i"
+    },
+    {
+      "id": "gestiones",
+      "question": "¿Qué gestiones puedo hacer como estudiante?",
+      "expectation": "answer",
+      "tags": [
+        "gestiones"
+      ],
+      "retrieved": [
+        "uvigo-gestiones",
+        "uvigo-estudiar",
+        "uvigo-movilidad",
+        "uvigo-matricula",
+        "uvigo-perfil-estudiantes"
+      ],
+      "confidence": 1,
+      "score": 18.11,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 568,
+      "answerChars": 1137,
+      "answerPreview": "## Resumen\n\nConoce cómo se realizan ciertos trámites y dónde hay que gestionarlos. La secretaría virtual agrupa los servicios online de la gestión académica: matrícula, becas, certificados y títulos, reconocimientos de créditos, programas de movilidad y otros.\n\n## Puntos clave\n\n- Si aún no sabes qué es y cómo usarla, puedes consultarlo en este enlace.\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar plazos y requisitos.\n- Ten a mano tu expediente o identificador del trámite"
+    },
+    {
+      "id": "perfil-estudiantes",
+      "question": "¿Dónde están los accesos rápidos para estudiantes?",
+      "expectation": "answer",
+      "tags": [
+        "gestiones"
+      ],
+      "retrieved": [
+        "uvigo-perfil-estudiantes",
+        "uvigo-perfil-pas",
+        "uvigo-perfil-pdi",
+        "uvigo-perfil-estudiantes",
+        "uvigo-perfil-estudiantes"
+      ],
+      "confidence": 0.75,
+      "score": 41.99,
+      "coverage": 0.75,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 587,
+      "answerChars": 1123,
+      "answerPreview": "## Resumen\n\nAccesos rápidos a los servicios de la UVigo ​​​​Pulsando en los siguientes enlaces accederás a toda la información que necesitas para comenzar o continuar tu vida universitaria en la UVigo.\n\n## Puntos clave\n\n- En cada centro hay un grupo de representantes de estudiantes dispuesto a ayudarte\n- Redes wifi disponibles en los campus\n- Personal de los servicios de la UVigo\n- Al día de todo lo que sucede en los campus\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar p"
+    },
+    {
+      "id": "asesoramiento",
+      "question": "¿Dónde puedo pedir asesoramiento?",
+      "expectation": "answer",
+      "tags": [
+        "servicios"
+      ],
+      "retrieved": [
+        "uvigo-asesoramiento",
+        "uvigo-estudiar",
+        "uvigo-asesoramiento",
+        "uvigo-perfil-estudiantes",
+        "uvigo-gestiones"
+      ],
+      "confidence": 1,
+      "score": 59.79,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 813,
+      "answerChars": 1685,
+      "answerPreview": "## Resumen\n\nLa Universidade de Vigo tiene herramientas para ayudarte en cada una de las etapas de estudiante, a futuros y a los actuales alumnos y alumnas. Presiona en estos enlaces en caso de que quieras acceder a la universidad o si ya eres miembro de nuestra comunidad.\n\n## Puntos clave\n\n- El SIE es la sección de información al estudiante y nuestro objetivo es ofrecerles a todo el alumnado así como a futuros universitarios una información clara y completa sobre todo lo concerniente a la vida u"
+    },
+    {
+      "id": "conocenos",
+      "question": "¿Qué datos e historia presenta la UVigo en Conócenos?",
+      "expectation": "answer",
+      "tags": [
+        "institucional"
+      ],
+      "retrieved": [
+        "uvigo-institucional",
+        "uvigo-conocenos",
+        "uvigo-conocenos",
+        "uvigo-vistazo",
+        "uvigo-matricula-grado"
+      ],
+      "confidence": 0.61,
+      "score": 12.3,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 566,
+      "answerChars": 1120,
+      "answerPreview": "## Resumen\n\nConócenos en profundidad para aprovechar al máximo tu relación con nosotros Encuentra toda la información sobre nuestra organización: institucional, administrativa, nuestro gobierno, los servicios, los planes y programas…\n\n## Puntos clave\n\n- un montón de información útil para sacar provecho de tus experiencias con la Universidade de Vigo.\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar plazos y requisitos.\n- Ten a mano tu expediente o identificador del trámite "
+    },
+    {
+      "id": "estudiar",
+      "question": "¿Por qué estudiar en la Universidade de Vigo?",
+      "expectation": "answer",
+      "tags": [
+        "estudios"
+      ],
+      "retrieved": [
+        "uvigo-estudiar",
+        "uvigo-estudiar",
+        "uvigo-vistazo",
+        "uvigo-conocenos",
+        "uvigo-institucional"
+      ],
+      "confidence": 1,
+      "score": 19.97,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 581,
+      "answerChars": 1646,
+      "answerPreview": "## Resumen\n\nEstudiar en la Universidade de Vigo puede ser una experiencia inolvidable en la existencia de una persona, somos una institución nueva pero muy dinámica, que cada día va ascendiendo por los rankings nacionales e internacionales. En nuestra universidad puedes encontrar una amplia oferta de estudios oficiales, tanto de grado como de posgrado, así como otro tipo de estudios no oficiales pero que nos parecen igual de importantes, como pueden ser el programa universitario de mayores, el c"
+    },
+    {
+      "id": "cronograma",
+      "question": "¿Qué fechas marca el cronograma del curso 2026/2027?",
+      "expectation": "answer",
+      "tags": [
+        "calendario"
+      ],
+      "retrieved": [
+        "uvigo-calendario-2026-27-pdf",
+        "uvigo-cronograma-2026-27-pdf",
+        "uvigo-calendario",
+        "uvigo-calendario-2026-27-pdf",
+        "uvigo-cronograma-2026-27-pdf"
+      ],
+      "confidence": 0.64,
+      "score": 27.48,
+      "coverage": 0.67,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 1,
+      "model": "grounded-extractive-v1",
+      "latencyMs": 582,
+      "answerChars": 1604,
+      "answerPreview": "## Resumen\n\nCALENDARIO ACADÉMICO DO CURSO 2026-2027 (aprobado no Consello de Goberno do 25 de marzo do 2026) O curso académico comprenderá do 1 de setembro de 2026 ao 31 de agosto de\n\n## Puntos clave\n\n- O calendario de actividades académicas é o marco temporal no que se desenvolve a planificación do conxunto das diversas actividades formativas, incluíndo as correspondentes probas de avaliación, nas titulacións que se imparten na Universidade.\n- Seguindo o disposto polo RD 1125/2003, cada crédito"
+    },
+    {
+      "id": "fuera-piscina",
+      "question": "¿Cuál es el horario de la piscina municipal de Vigo?",
+      "expectation": "abstain",
+      "tags": [
+        "fuera-de-alcance"
+      ],
+      "retrieved": [
+        "uvigo-biblioteca",
+        "uvigo-tic",
+        "uvigo-biblioteca",
+        "uvigo-vistazo",
+        "uvigo-conocenos"
+      ],
+      "confidence": 0.57,
+      "score": 10.66,
+      "coverage": 0.33,
+      "abstained": true,
+      "retrievalHit": false,
+      "abstentionCorrect": true,
+      "citationsValid": false,
+      "expectedCited": null,
+      "faithfulness": null,
+      "lexicalGrounding": null,
+      "model": "grounded-no-evidence",
+      "latencyMs": 562,
+      "answerChars": 323,
+      "answerPreview": "## Resumen\nNo hay evidencia suficiente en las fuentes disponibles para responder con seguridad a esta consulta.\n## Pasos siguientes\n- Si tu caso es particular, solicita derivación a la secretaría o al servicio responsable.\n## Limitaciones\nVerifica siempre el dato en la fuente oficial antes de tomar una decisión académica."
+    },
+    {
+      "id": "fuera-comedor",
+      "question": "¿Cuánto cuesta el menú del comedor del campus de Ourense?",
+      "expectation": "abstain",
+      "tags": [
+        "fuera-de-alcance"
+      ],
+      "retrieved": [
+        "uvigo-campus",
+        "uvigo-campus",
+        "uvigo-campus",
+        "uvigo-vistazo",
+        "uvigo-vistazo"
+      ],
+      "confidence": 0.5,
+      "score": 25.91,
+      "coverage": 0.5,
+      "abstained": true,
+      "retrievalHit": false,
+      "abstentionCorrect": true,
+      "citationsValid": false,
+      "expectedCited": null,
+      "faithfulness": null,
+      "lexicalGrounding": null,
+      "model": "grounded-no-evidence",
+      "latencyMs": 645,
+      "answerChars": 323,
+      "answerPreview": "## Resumen\nNo hay evidencia suficiente en las fuentes disponibles para responder con seguridad a esta consulta.\n## Pasos siguientes\n- Si tu caso es particular, solicita derivación a la secretaría o al servicio responsable.\n## Limitaciones\nVerifica siempre el dato en la fuente oficial antes de tomar una decisión académica."
+    },
+    {
+      "id": "fuera-notas",
+      "question": "¿Qué notas saqué en la asignatura de Física el curso pasado?",
+      "expectation": "abstain",
+      "tags": [
+        "datos-personales"
+      ],
+      "retrieved": [
+        "uvigo-cronograma-2026-27-pdf",
+        "uvigo-cronograma-2026-27-pdf",
+        "uvigo-calendario-2026-27-pdf",
+        "uvigo-grados",
+        "uvigo-movilidad"
+      ],
+      "confidence": 0.32,
+      "score": 10.08,
+      "coverage": 0.33,
+      "abstained": true,
+      "retrievalHit": false,
+      "abstentionCorrect": true,
+      "citationsValid": false,
+      "expectedCited": null,
+      "faithfulness": null,
+      "lexicalGrounding": null,
+      "model": "grounded-no-evidence",
+      "latencyMs": 603,
+      "answerChars": 323,
+      "answerPreview": "## Resumen\nNo hay evidencia suficiente en las fuentes disponibles para responder con seguridad a esta consulta.\n## Pasos siguientes\n- Si tu caso es particular, solicita derivación a la secretaría o al servicio responsable.\n## Limitaciones\nVerifica siempre el dato en la fuente oficial antes de tomar una decisión académica."
+    },
+    {
+      "id": "fuera-santiago",
+      "question": "¿Cómo solicito una beca en la Universidad de Santiago?",
+      "expectation": "abstain",
+      "tags": [
+        "otra-universidad"
+      ],
+      "retrieved": [
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-becas",
+        "uvigo-acceder",
+        "uvigo-institucional"
+      ],
+      "confidence": 0.56,
+      "score": 35.93,
+      "coverage": 0.67,
+      "abstained": true,
+      "retrievalHit": false,
+      "abstentionCorrect": true,
+      "citationsValid": false,
+      "expectedCited": null,
+      "faithfulness": null,
+      "lexicalGrounding": null,
+      "model": "grounded-no-evidence",
+      "latencyMs": 605,
+      "answerChars": 323,
+      "answerPreview": "## Resumen\nNo hay evidencia suficiente en las fuentes disponibles para responder con seguridad a esta consulta.\n## Pasos siguientes\n- Si tu caso es particular, solicita derivación a la secretaría o al servicio responsable.\n## Limitaciones\nVerifica siempre el dato en la fuente oficial antes de tomar una decisión académica."
+    },
+    {
+      "id": "fuera-rector",
+      "question": "¿Cuál es el número de teléfono personal del rector?",
+      "expectation": "abstain",
+      "tags": [
+        "datos-personales"
+      ],
+      "retrieved": [
+        "uvigo-gestiones",
+        "uvigo-matricula-grado",
+        "uvigo-tic",
+        "uvigo-tic",
+        "uvigo-matricula-grado"
+      ],
+      "confidence": 0.47,
+      "score": 2.98,
+      "coverage": 0.25,
+      "abstained": true,
+      "retrievalHit": false,
+      "abstentionCorrect": true,
+      "citationsValid": false,
+      "expectedCited": null,
+      "faithfulness": null,
+      "lexicalGrounding": null,
+      "model": "grounded-no-evidence",
+      "latencyMs": 567,
+      "answerChars": 323,
+      "answerPreview": "## Resumen\nNo hay evidencia suficiente en las fuentes disponibles para responder con seguridad a esta consulta.\n## Pasos siguientes\n- Si tu caso es particular, solicita derivación a la secretaría o al servicio responsable.\n## Limitaciones\nVerifica siempre el dato en la fuente oficial antes de tomar una decisión académica."
+    },
+    {
+      "id": "fuera-sergas",
+      "question": "¿Puedes reservar una cita médica en el SERGAS?",
+      "expectation": "abstain",
+      "tags": [
+        "fuera-de-alcance"
+      ],
+      "retrieved": [
+        "uvigo-perfil-pas",
+        "uvigo-gestiones",
+        "uvigo-perfil-pas",
+        "uvigo-grados",
+        "uvigo-perfil-estudiantes"
+      ],
+      "confidence": 0.42,
+      "score": 2.72,
+      "coverage": 0.25,
+      "abstained": true,
+      "retrievalHit": false,
+      "abstentionCorrect": true,
+      "citationsValid": false,
+      "expectedCited": null,
+      "faithfulness": null,
+      "lexicalGrounding": null,
+      "model": "grounded-no-evidence",
+      "latencyMs": 599,
+      "answerChars": 323,
+      "answerPreview": "## Resumen\nNo hay evidencia suficiente en las fuentes disponibles para responder con seguridad a esta consulta.\n## Pasos siguientes\n- Si tu caso es particular, solicita derivación a la secretaría o al servicio responsable.\n## Limitaciones\nVerifica siempre el dato en la fuente oficial antes de tomar una decisión académica."
+    },
+    {
+      "id": "fuera-alquiler",
+      "question": "¿Cuánto cuesta alquilar un piso en Vigo?",
+      "expectation": "abstain",
+      "tags": [
+        "fuera-de-alcance"
+      ],
+      "retrieved": [
+        "uvigo-conocenos",
+        "uvigo-vistazo",
+        "uvigo-vistazo",
+        "uvigo-vistazo",
+        "uvigo-estudiar"
+      ],
+      "confidence": 0.47,
+      "score": 8.6,
+      "coverage": 0,
+      "abstained": true,
+      "retrievalHit": false,
+      "abstentionCorrect": true,
+      "citationsValid": false,
+      "expectedCited": null,
+      "faithfulness": null,
+      "lexicalGrounding": null,
+      "model": "grounded-no-evidence",
+      "latencyMs": 559,
+      "answerChars": 323,
+      "answerPreview": "## Resumen\nNo hay evidencia suficiente en las fuentes disponibles para responder con seguridad a esta consulta.\n## Pasos siguientes\n- Si tu caso es particular, solicita derivación a la secretaría o al servicio responsable.\n## Limitaciones\nVerifica siempre el dato en la fuente oficial antes de tomar una decisión académica."
+    },
+    {
+      "id": "fuera-wifi",
+      "question": "¿Qué contraseña tiene el Wi-Fi de la cafetería?",
+      "expectation": "abstain",
+      "tags": [
+        "datos-personales"
+      ],
+      "retrieved": [
+        "uvigo-campus",
+        "uvigo-biblioteca",
+        "uvigo-perfil-pas",
+        "uvigo-perfil-estudiantes",
+        "uvigo-perfil-estudiantes"
+      ],
+      "confidence": 0.5,
+      "score": 7.97,
+      "coverage": 0.5,
+      "abstained": true,
+      "retrievalHit": false,
+      "abstentionCorrect": true,
+      "citationsValid": false,
+      "expectedCited": null,
+      "faithfulness": null,
+      "lexicalGrounding": null,
+      "model": "grounded-no-evidence",
+      "latencyMs": 575,
+      "answerChars": 323,
+      "answerPreview": "## Resumen\nNo hay evidencia suficiente en las fuentes disponibles para responder con seguridad a esta consulta.\n## Pasos siguientes\n- Si tu caso es particular, solicita derivación a la secretaría o al servicio responsable.\n## Limitaciones\nVerifica siempre el dato en la fuente oficial antes de tomar una decisión académica."
+    }
+  ]
+}

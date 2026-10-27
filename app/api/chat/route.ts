@@ -1,7 +1,8 @@
 ﻿import { NextResponse } from "next/server";
 import { z } from "zod";
 import { classifyIntent, needsClarification } from "@/lib/agents";
-import { retrieve, retrievalConfidence, topScore, type RetrievedChunk } from "@/lib/retrieval";
+import { retrievalConfidence, topScore, type RetrievedChunk } from "@/lib/retrieval";
+import { retrieveAsync } from "@/lib/retrieval-hybrid";
 import { callLLM, callLLMStream, LLMQuotaExceededError } from "@/lib/llm";
 import { composeGroundedAnswer } from "@/lib/answer-composer";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -428,11 +429,12 @@ export async function POST(req: Request) {
       viewer = null;
     }
     const agent = classifyIntent(message);
-    const chunks = retrieve(message, {
+    const chunks = await retrieveAsync(message, {
       topK: 5,
       locale,
       includeDemo: true,
       minConfidence: 0.15,
+      organizationId: viewer?.organizationId ?? null,
     });
     const confidence = retrievalConfidence(chunks);
     const score = topScore(chunks);

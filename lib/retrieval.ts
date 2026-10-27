@@ -19,6 +19,8 @@ export type RetrievedChunk = {
   truncated: boolean;
   chunkIndex: number;
   documentIntro: string;
+  /** Similitud coseno cuando el fragmento llega del tramo semántico. */
+  semantic?: number;
 };
 
 type CorpusDocument = {
@@ -379,6 +381,47 @@ export function getCorpusStats() {
       .at(-1) ?? null,
     organizations: [...new Set(CORPUS.map((d) => d.organization))],
   };
+}
+
+export type CorpusChunk = {
+  id: string;
+  documentId: string;
+  chunkIndex: number;
+  title: string;
+  sourceUrl: string;
+  text: string;
+  locale: "es" | "gl" | "en";
+  organization: string;
+  kind: "html" | "pdf" | "demo";
+  status: "official" | "stale" | "demo" | "approved";
+  sourceType: SourceType;
+  reviewedAt: string;
+  truncated: boolean;
+  documentIntro: string;
+};
+
+/**
+ * Fragmentos exactos que se indexan en `document_chunks`. La ingesta y el
+ * script de embeddings comparten esta función para que el texto vectorizado
+ * sea el mismo que ve BM25.
+ */
+export function listCorpusChunks(): CorpusChunk[] {
+  return INDEX.map((chunk) => ({
+    id: `${chunk.id}-${chunk.chunkIndex}`,
+    documentId: chunk.id,
+    chunkIndex: chunk.chunkIndex,
+    title: chunk.title,
+    sourceUrl: chunk.sourceUrl,
+    text: chunk.text,
+    locale: chunk.locale,
+    organization: chunk.organization,
+    kind: chunk.kind,
+    status: chunk.status,
+    sourceType: chunk.kind === "demo" ? "demo" : "official",
+    reviewedAt: chunk.reviewedAt,
+    truncated: chunk.truncated,
+    documentIntro: chunk.content.slice(0, 1600),
+  }));
 }
 
 export function listCorpusDocuments() {

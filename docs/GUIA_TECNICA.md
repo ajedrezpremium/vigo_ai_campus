@@ -11,7 +11,7 @@ Navegador
   │    └─ Administración: /admin, /admin/analytics, /admin/ai...
   │
   ├─ API Routes (Node.js)
-  │    ├─ /api/chat ──► retrieval ──► OpenRouter ──► respuesta + citas
+  │    ├─ /api/chat ──► retrieval híbrido ──► OpenRouter ──► respuesta + citas
   │    ├─ /api/tickets, /api/feedback
   │    ├─ /api/metrics, /api/audit, /api/knowledge
   │    └─ /api/auth/provision, /api/llm/status
@@ -19,6 +19,7 @@ Navegador
   ├─ Supabase
   │    ├─ Auth (email/contraseña)
   │    ├─ Postgres + RLS (organizations, memberships, conversations...)
+  │    ├─ pgvector (document_chunks.embedding, HNSW, match_document_chunks)
   │    └─ audit_events (métricas y auditoría)
   │
   └─ uvigo.gal
@@ -31,8 +32,8 @@ Navegador
 1. El cliente envía `{ message, locale, conversationId, stream? }` a `/api/chat`.
 2. `lib/security.ts` normaliza, limita a 2.000 caracteres y detecta prompt injection.
 3. Rate limit: 8/min y `AI_DAILY_REQUEST_LIMIT`/día por IP+UA.
-4. `lib/retrieval.ts` recupera hasta 5 fragmentos; las fuentes oficiales pesan 1,58× frente a 0,58× de las demo, y las `stale` se penalizan un 18 %.
-5. `lib/evidence.ts` comprueba alcance y cobertura. Si la consulta es de otra universidad, pide datos personales o la cobertura del mejor fragmento es < 0,6, se responde con abstención y `needsHuman: true`.
+4. `lib/retrieval-hybrid.ts` recupera hasta 5 fragmentos combinando BM25 (`lib/retrieval.ts`) y similitud vectorial (`lib/semantic.ts`), fusionados con RRF adaptativa (`lib/hybrid.ts`). Las fuentes oficiales pesan 1,58× frente a 0,58× de las demo, y las `stale` se penalizan un 18 %. Si el tramo semántico falla, devuelve el resultado léxico sin romper el chat.
+5. `lib/evidence.ts` comprueba alcance y cobertura. Si la consulta es de otra universidad, pide datos personales o la cobertura del mejor fragmento es < 0,6, se responde con abstención y `needsHuman: true`. La abstención es deliberadamente **léxica**: los datos muestran que un umbral de coseno no separa consultas fuera de alcance de preguntas válidas.
 6. `lib/prompts/chat.ts` construye el prompt versionado (`CHAT_PROMPT_VERSION`) delimitando cada fuente con `<fuente>` como dato no ejecutable.
 7. `lib/llm.ts` consulta OpenRouter con la lista de modelos free y fallback secuencial. Con `stream: true`, `callLLMStream()` emite deltas y `/api/chat` responde NDJSON.
 8. Si hay 429 de cuota diaria o el modelo falla antes de emitir texto, `lib/answer-composer.ts` genera una respuesta extractiva profesional con las mismas fuentes.
@@ -60,7 +61,7 @@ Sin `stream: true` se mantiene la respuesta JSON original, de modo que clientes 
 | `organizations` | Tenant (universidad, facultad, empresa) |
 | `memberships` | Usuario ↔ organización ↔ rol |
 | `agents` | Agentes configurables por organización |
-| `knowledge_sources` / `documents` / `document_chunks` | Base de conocimiento multi-tenant con embeddings opcionales |
+| `knowledge_sources` / `documents` / `document_chunks` | Base de conocimiento multi-tenant; `embedding vector(1536)` con índice HNSW |
 | `conversations` / `messages` | Historial y citas |
 | `tickets` | Derivaciones humanas |
 | `feedback` | Valoraciones |
@@ -83,7 +84,7 @@ Sin `stream: true` se mantiene la respuesta JSON original, de modo que clientes 
 - **Modo demo**: el visitante es `estudiante`. Solo `DEMO_ADMIN=true` (local) abre `/admin`.
 - **Webhooks**: HMAC SHA-256 con `timingSafeEqual`.
 - **Secretos**: `SUPABASE_SERVICE_ROLE_KEY` y `LLM_API_KEY` solo en servidor; nunca en `NEXT_PUBLIC_*`.
-- **Tests**: `tests/security.test.ts` cubre inyección, URLs, HMAC, rate limit, roles, RAG y compositor; `tests/observability.test.ts` cubre request ids, buffer, aislamiento por organización y DSN; `tests/prompts.test.ts` protege el formato del prompt, `tests/evaluation.test.ts` fija los umbrales de calidad, `tests/ingestion.test.ts` prueba la fusión incremental y `tests/feedback.test.ts` la agregación de valoraciones. Total: 48.
+- **Tests**: `tests/security.test.ts` cubre inyección, URLs, HMAC, rate limit, roles, RAG y compositor; `tests/observability.test.ts` cubre request ids, buffer, aislamiento por organización y DSN; `tests/prompts.test.ts` protege el formato del prompt, `tests/evaluation.test.ts` fija los umbrales de calidad, `tests/ingestion.test.ts` prueba la fusión incremental, `tests/feedback.test.ts` la agregación de valoraciones y `tests/hybrid.test.ts` + `tests/embeddings.test.ts` la fusión RRF y la configuración de embeddings. Total: 59.
 
 ## 4. Operación
 
@@ -105,14 +106,53 @@ La ingesta es incremental y usa `checksum` para no reescribir contenido idéntic
 
 Si una fuente nueva falla y no hay copia previa, queda en `missing` y no se inventa un documento. La fusión está en `mergeCorpus()` y se prueba sin red en `tests/ingestion.test.ts`.
 
+### Búsqueda semántica con pgvector
+
+```bash
+npm run semantic:status
+npm run embed:corpus
+npm run embed:corpus -- --dry-run
+```
+
+| Pieza | Responsabilidad |
+|---|---|
+| `lib/embeddings.ts` | Cliente de OpenRouter; valida dimensiones, lotes, reintentos y caché de consultas. |
+| `scripts/embed-corpus.ts` | Indexación idempotente: 40 documentos y 131 fragmentos en `documents`/`document_chunks`. |
+| `lib/semantic.ts` | RPC `match_document_chunks` con HNSW o *fallback* en memoria (TTL 5 min). |
+| `lib/hybrid.ts` | Coseno, parseo de vectores y fusión RRF con reserva de plazas semánticas. |
+| `lib/retrieval-hybrid.ts` | `retrieveAsync()`: híbrido con degradación a BM25 si algo falla. |
+| `supabase/migrations/0003_semantic_search.sql` | Índice HNSW, índice único `documents(organization_id, version_label)` y función RPC. |
+
+Reglas de fusión:
+
+- Ancla léxica fuerte (confianza ≥ 0,5): peso semántico 0,95 y 1 plaza reservada.
+- Ancla media (0,5–0,75): peso 0,95 y 2 plazas.
+- BM25 perdido (< 0,5): peso 1,15 y 3 plazas; el semántico puede liderar.
+- Fuentes demo: el tramo semántico las penaliza al 55 % y `includeDemo: false` las excluye.
+- Se garantiza el top-3 léxico para que una pregunta como «grados» no pierda `uvigo-grados`.
+
+`npm run semantic:status` distingue `rpc` (pgvector activo) de `cache` (migración pendiente, cálculo en el proceso). El *fallback* en memoria es viable porque el corpus tiene 131 fragmentos; a partir de unos pocos miles habría que aplicar la migración.
+
 ### Evaluación de IA
 
 ```bash
-npm run eval          # compositor determinista; sin red ni cuota
-npm run eval:llm      # modelo real; requiere .env.local
+npm run eval                # compositor determinista; sin red ni cuota
+npm run eval -- --semantic  # compositor con retrieval híbrido
+npm run eval:llm            # modelo real; requiere .env.local
+npm run eval:paraphrase     # 12 paráfrasis ES/GL/EN, léxico vs. híbrido
 ```
 
-El set vive en `lib/evaluation/dataset.ts` (30 preguntas: 22 respondibles y 8 de abstención). `lib/evaluation/run.ts` calcula *recall*, cobertura, abstención, citas, *faithfulness* operativa y latencia p50/p95/max. El p95 se compara con el umbral de 4 s. Los informes se escriben en `eval/results/` e incluyen `promptVersion`, modelo y latencia por pregunta. El compositor determinista es el que se ejecuta en CI.
+El set vive en `lib/evaluation/dataset.ts` (30 preguntas: 22 respondibles y 8 de abstención). `lib/evaluation/run.ts` calcula *recall*, cobertura, abstención, citas, *faithfulness* operativa y latencia p50/p95/max. El p95 se compara con el umbral de 4 s. Los informes se escriben en `eval/results/` e incluyen `promptVersion`, modelo, tipo de retrieval y latencia por pregunta. El compositor determinista es el que se ejecuta en CI.
+
+`lib/evaluation/paraphrases.ts` añade 12 consultas coloquiales y en gallego/inglés para aislar el retrieval. En el set de 30 el léxico ya era perfecto, así que no podía mostrar la mejora; las paráfrasis sí:
+
+| Métrica | Léxico | Híbrido |
+|---|---|---|
+| Recall@1 | 0,083 | 0,750 |
+| Recall@5 | 0,333 | 1,000 |
+| MRR | 0,144 | 0,825 |
+
+En el set principal el híbrido mantiene 1,000 en recall, cobertura, abstención, citas y *faithfulness*, con p95 de 813 ms (el cálculo del coseno en memoria domina la latencia).
 
 ### Feedback y conocimiento
 
@@ -197,9 +237,10 @@ Webhook: `POST /api/webhooks/uvigo` con cabecera `x-uvigo-signature: sha256=<hma
 
 ## 9. Limitaciones y siguientes pasos
 
-1. Añadir 10 créditos en OpenRouter para 1.000 peticiones free/día (o usar un modelo de pago).
+1. Añadir 10 créditos en OpenRouter para 1.000 peticiones free/día (o usar un modelo de pago). Con modelos `:free` se han medido 8–29 s por respuesta; el p95 de 4 s exige un modelo con *streaming* rápido.
 2. Configurar Upstash Redis para rate limiting distribuido (opcional; hay fallback a memoria).
 3. Configurar SSO SAML/OIDC con la UVigo.
 4. Firmar convenio para endpoints SEDE/Secretaría/Campus Remoto.
 5. Revisión manual con lector de pantalla real (la auditoría axe ya está en CI).
-6. Sustituir el corpus estático por `pgvector` cuando el volumen crezca.
+6. Aplicar `0003_semantic_search.sql` en la BD remota para sustituir el *fallback* en memoria por pgvector + HNSW.
+7. Reindexar el corpus cuando cambie el modelo de embeddings (`npm run embed:corpus`) y fijar `EMBEDDINGS_DIMENSIONS` a la dimensión de la columna.

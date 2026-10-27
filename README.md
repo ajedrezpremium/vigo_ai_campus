@@ -6,7 +6,7 @@ Superagente académico para la Universidade de Vigo: orientación sobre matrícu
 
 - Producción: <https://vigo-ai-campus.vercel.app/app>
 - Stack: Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, Supabase, OpenRouter.
-- Corpus: 26 fuentes oficiales de `uvigo.gal` (24 HTML + 2 PDF), capturadas y versionadas.
+- Corpus: 40 documentos (26 fuentes oficiales de `uvigo.gal`, 24 HTML + 2 PDF, y 14 fuentes de demostración) → 131 fragmentos indexados con embeddings de 1.536 dimensiones.
 
 ## Arranque rápido
 
@@ -19,7 +19,7 @@ npm run dev                  # http://localhost:3000
 Comprobaciones:
 
 ```bash
-npm test          # 30 tests de seguridad, roles, aislamiento multi-tenant, RAG, compositor y observabilidad
+npm test          # 59 tests de seguridad, roles, aislamiento multi-tenant, RAG híbrido, compositor y observabilidad
 npm run lint
 npm run build
 npm run test:a11y # axe sobre 6 páginas + locale (requiere build previo)
@@ -49,16 +49,21 @@ npm run test:a11y # axe sobre 6 páginas + locale (requiere build previo)
 | `UVIGO_SEDE_BASE_URL` / `_API_KEY` | no | Adaptador SEDE |
 | `UVIGO_SECRETARIA_BASE_URL` / `_API_KEY` | no | Adaptador Secretaría |
 | `UVIGO_CAMPUS_REMOTO_BASE_URL` / `_API_KEY` | no | Adaptador Campus Remoto |
+| `EMBEDDINGS_MODEL` | no | `openai/text-embedding-3-small` (1.536 dims) por defecto |
+| `EMBEDDINGS_DIMENSIONS` | no | 1.536; debe coincidir con `document_chunks.embedding` |
+| `EMBEDDINGS_API_KEY` | no | Si falta, se reutiliza `LLM_API_KEY` |
+| `EMBEDDINGS_DISABLED` | no | `true` desactiva el tramo semántico y deja solo BM25 |
 
 ## Cómo funciona el RAG
 
 1. `scripts/ingest-uvigo.mjs` descarga páginas y PDFs públicos de `uvigo.gal`, extrae el contenido principal con `cheerio`/`pdf-parse` y genera `data/uvigo-corpus.ts` con URL, fechas, checksum y texto.
 2. `lib/retrieval.ts` construye un índice de fragmentos, aplica stemming ligero ES/GL, BM25, prioridad de fuentes oficiales y bonus por título/intención. Las fuentes `stale` ceden ante una copia vigente.
-3. `lib/evidence.ts` decide si hay evidencia suficiente. Si la consulta es de otra universidad, pide datos personales o la cobertura es baja, el chat **se abstiene** en lugar de responder con fragmentos débiles.
-4. `POST /api/chat` valida y sanea la entrada, aplica rate limiting, recupera 5 fragmentos y construye el prompt versionado de `lib/prompts/chat.ts` con fuentes delimitadas como datos.
-5. Si OpenRouter no está disponible o se agota la cuota free, `lib/answer-composer.ts` compone una respuesta profesional **solo con las fuentes recuperadas**, sin inventar datos.
-6. La respuesta se puede pedir como JSON (`stream: false`, por defecto) o como stream NDJSON (`stream: true`) con eventos `meta`, `notice`, `delta`, `done` y `error`.
-7. Cada respuesta devuelve citas con `type: official|demo`, URL, organización, fecha de revisión y `promptVersion`.
+3. `lib/retrieval-hybrid.ts` combina ese ranking léxico con una búsqueda vectorial en `document_chunks` (pgvector) y fusiona ambos con RRF adaptativa. El tramo semántico **complementa** al léxico: rescata paráfrasis, gallego e inglés, pero no sustituye la decisión de abstención.
+4. `lib/evidence.ts` decide si hay evidencia suficiente. Si la consulta es de otra universidad, pide datos personales o la cobertura es baja, el chat **se abstiene** en lugar de responder con fragmentos débiles.
+5. `POST /api/chat` valida y sanea la entrada, aplica rate limiting, recupera 5 fragmentos y construye el prompt versionado de `lib/prompts/chat.ts` con fuentes delimitadas como datos.
+6. Si OpenRouter no está disponible o se agota la cuota free, `lib/answer-composer.ts` compone una respuesta profesional **solo con las fuentes recuperadas**, sin inventar datos.
+7. La respuesta se puede pedir como JSON (`stream: false`, por defecto) o como stream NDJSON (`stream: true`) con eventos `meta`, `notice`, `delta`, `done` y `error`.
+8. Cada respuesta devuelve citas con `type: official|demo`, URL, organización, fecha de revisión y `promptVersion`.
 
 ### Actualizar el corpus
 
@@ -68,14 +73,51 @@ npm run ingest:uvigo
 
 La ingesta es **incremental**: si el checksum de una fuente no cambia se conserva el contenido ya versionado y solo se actualiza `lastCheckedAt`; si una fuente falla, la última copia válida se mantiene marcada como `stale` en lugar de desaparecer. El script aborta si quedan menos de 5 fuentes oficiales disponibles. El resultado se versiona: el despliegue es reproducible y no depende de la red en runtime.
 
+### Búsqueda híbrida (BM25 + pgvector)
+
+```bash
+npm run semantic:status   # modelo, dimensiones, backend y fragmentos indexados
+npm run embed:corpus      # vectoriza el corpus y lo guarda en Supabase (idempotente)
+npm run embed:corpus -- --dry-run   # coste estimado sin llamar a la API
+```
+
+- `lib/embeddings.ts` llama a `POST /api/v1/embeddings` de OpenRouter con `openai/text-embedding-3-small` (1.536 dims), valida la dimensión antes de escribir en Postgres, reintenta 429/5xx y cachea el vector de cada consulta.
+- `lib/semantic.ts` usa la función SQL `match_document_chunks` (HNSW + coseno). Si la migración aún no está aplicada, carga los 131 embeddings en memoria y calcula el coseno en el proceso: el chat no se rompe y la calidad se puede validar antes del despliegue.
+- `lib/hybrid.ts` fusiona ambos rankings con RRF. Con un ancla léxica fuerte el semántico solo complementa (peso 0,95 y 1 plaza reservada); con BM25 perdido (cobertura < 0,5) el semántico lidera (peso 1,15 y hasta 3 plazas) para rescatar paráfrasis.
+- La abstención sigue siendo **léxica** (`shouldAbstain()`): en los datos medidos hay consultas fuera de alcance con similitud 0,56 y preguntas válidas con 0,44, así que un umbral de coseno no separa ambos casos con seguridad.
+
+Aplicar la migración (necesaria para pasar de memoria a pgvector):
+
+```bash
+supabase db push
+# o pegar supabase/migrations/0003_semantic_search.sql en el SQL Editor de Supabase
+```
+
+Sin la migración el sistema funciona igual, pero `npm run semantic:status` muestra `Backend: memoria (falta la migración)`.
+
 ### Evaluación de la IA
 
 ```bash
-npm run eval          # compositor determinista, sin red ni cuota; apto para CI
-npm run eval:llm      # modelo real; requiere LLM_API_KEY en .env.local y cuota
+npm run eval              # compositor determinista, sin red ni cuota; apto para CI
+npm run eval -- --semantic  # compositor con retrieval híbrido (requiere embeddings)
+npm run eval:llm          # modelo real; requiere LLM_API_KEY en .env.local y cuota
+npm run eval:paraphrase   # 12 paráfrasis ES/GL/EN: léxico vs. híbrido
 ```
 
-El set de `lib/evaluation/dataset.ts` tiene 30 preguntas (22 respondibles y 8 de abstención). Se miden *recall* de recuperación, cobertura de respuesta, abstención correcta, validez de citas, *faithfulness* operativa (fechas, URLs y `[Fuente N]` verificables dentro del contexto) y latencia p50/p95. Los informes se guardan en `eval/results/` con la versión de prompt y el modelo usados. `npm test` ejecuta la evaluación determinista como prueba de regresión.
+El set de `lib/evaluation/dataset.ts` tiene 30 preguntas (22 respondibles y 8 de abstención). Se miden *recall* de recuperación, cobertura de respuesta, abstención correcta, validez de citas, *faithfulness* operativa (fechas, URLs y `[Fuente N]` verificables dentro del contexto) y latencia p50/p95. Los informes se guardan en `eval/results/` con la versión de prompt, el modelo y el tipo de retrieval. `npm test` ejecuta la evaluación determinista como prueba de regresión.
+
+Resultados con el corpus actual (2026-10-27, compositor determinista):
+
+| Métrica | Léxico | Híbrido |
+|---|---|---|
+| Recall@5 (30 preguntas) | 1,000 | 1,000 |
+| Abstención correcta | 1,000 | 1,000 |
+| *Faithfulness* | 1,000 | 1,000 |
+| Recall@5 (12 paráfrasis) | 0,333 | **1,000** |
+| MRR (12 paráfrasis) | 0,144 | **0,825** |
+| Latencia p95 | 1 ms | 813 ms |
+
+El coste de indexar los 131 fragmentos fue de **0,000422 $** y cada consulta ronda los 30 tokens (~0,0000006 $).
 
 ### Feedback y fuentes obsoletas
 
@@ -158,6 +200,7 @@ CI/CD: `.github/workflows/deploy.yml` ejecuta lint, tests, build, accesibilidad 
 ## Documentación
 
 - [Guía técnica](docs/GUIA_TECNICA.md)
+- [Piloto en el departamento](docs/PILOTO_DEPARTAMENTO.md)
 - [Plan de mejora ejecutado](docs/PLAN_MEJORA_EJECUTADO.md)
 - [Plan de mejora V2](docs/PLAN_MEJORA_V2.md)
 - [Auditoría externa 2026-10-24](docs/AUDITORIA_2026-10-24.md)
@@ -166,6 +209,8 @@ CI/CD: `.github/workflows/deploy.yml` ejecuta lint, tests, build, accesibilidad 
 
 ## Límites conocidos
 
+- La migración `supabase/migrations/0003_semantic_search.sql` (índice HNSW + `match_document_chunks`) está en el repo pero **no aplicada en la BD remota**: falta un access token de Supabase o la contraseña. Mientras tanto la búsqueda semántica se resuelve en memoria sobre los 131 fragmentos ya vectorizados.
+- La latencia de extremo a extremo depende del modelo de OpenRouter: con modelos `:free` se han medido 8–29 s por respuesta. El umbral de 4 s se cumple en retrieval + compositor (p95 813 ms), pero no con el LLM real.
 - Los endpoints reales de SEDE, Secretaría y Campus Remoto requieren convenio y credenciales de la UVigo; los adaptadores devuelven `configured: false` y no inventan datos.
 - El rate limiting usa Upstash Redis si `UPSTASH_REDIS_REST_URL` y `_TOKEN` están definidos; si no, cae a memoria por instancia.
 - Las imágenes del campus son de `uvigo.gal` y se usan con atribución en un contexto académico. Para uso comercial hay que obtener licencia.
