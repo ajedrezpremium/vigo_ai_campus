@@ -1,19 +1,15 @@
 "use client";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-
-const categories = [
-  { value: "profesor", label: "Profesorado" },
-  { value: "alumno", label: "Alumnado" },
-  { value: "pas", label: "Personal no docente" },
-  { value: "proveedor", label: "Proveedores" },
-  { value: "colaborador", label: "Colaboradores" },
-];
+import { useI18n } from "@/lib/i18n";
 
 export default function ContactoPage() {
+  const { t } = useI18n();
+  const copy = t.contact;
   const [category, setCategory] = useState("alumno");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,9 +26,9 @@ export default function ContactoPage() {
         body: JSON.stringify({ summary: `[${category}] ${name} <${email}>: ${message}`, category }),
       });
       const data = await res.json();
-      setSent(`Solicitud registrada (demo) con id ${data.id}`);
+      setSent(copy.sent.replace("{id}", String(data.id ?? "")));
     } catch {
-      setSent("Error al registrar");
+      setSent(copy.error);
     } finally {
       setLoading(false);
     }
@@ -40,27 +36,27 @@ export default function ContactoPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary">Contacto</h1>
-      <p className="mt-2 text-muted-foreground">Selecciona tu perfil y envía tu consulta.</p>
+      <h1 className="text-3xl font-bold text-primary">{copy.title}</h1>
+      <p className="mt-2 text-muted-foreground">{copy.intro}</p>
       <Card className="mt-6">
         <CardContent className="space-y-3 p-6">
           <div className="flex flex-wrap gap-2">
-            {categories.map((c) => (
+            {copy.categories.map((option) => (
               <Button
-                key={c.value}
-                variant={category === c.value ? "default" : "outline"}
+                key={option.value}
+                variant={category === option.value ? "default" : "outline"}
                 size="sm"
-                onClick={() => setCategory(c.value)}
+                onClick={() => setCategory(option.value)}
               >
-                {c.label}
+                {option.label}
               </Button>
             ))}
           </div>
-          <Input placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Textarea placeholder="Mensaje" value={message} onChange={(e) => setMessage(e.target.value)} />
+          <Input placeholder={copy.namePlaceholder} value={name} onChange={(e) => setName(e.target.value)} />
+          <Input placeholder={copy.emailPlaceholder} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Textarea placeholder={copy.messagePlaceholder} value={message} onChange={(e) => setMessage(e.target.value)} />
           <Button onClick={submit} disabled={loading || !message.trim()}>
-            Enviar
+            {t.common.send}
           </Button>
           {sent && <p className="text-sm text-emerald-700">{sent}</p>}
         </CardContent>

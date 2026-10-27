@@ -63,7 +63,9 @@ Navegador
 
 - **Prompt injection**: patrones ES/EN/GL, etiquetas de contexto, SQL/script injection, URLs a red privada.
 - **Aislamiento**: todas las consultas de cliente llevan `organization_id`; las de soporte usan service role solo después de comprobar permiso.
-- **Rate limiting**: ventana fija en memoria. En Vercel multinstancia, migrar a Upstash Redis o Vercel KV manteniendo `checkRateLimit`.
+- **Rate limiting**: ventana fija. Usa Upstash Redis (`UPSTASH_REDIS_REST_URL`/`_TOKEN`) y, si no está configurado, cae a memoria por instancia. El contrato `checkRateLimitAsync` no cambia.
+- **Aislamiento multi-tenant**: métricas y auditoría filtran siempre por `organization_id`; sin organización no se consulta con *service role*.
+- **Modo demo**: el visitante es `estudiante`. Solo `DEMO_ADMIN=true` (local) abre `/admin`.
 - **Webhooks**: HMAC SHA-256 con `timingSafeEqual`.
 - **Secretos**: `SUPABASE_SERVICE_ROLE_KEY` y `LLM_API_KEY` solo en servidor; nunca en `NEXT_PUBLIC_*`.
 - **Tests**: `tests/security.test.ts` cubre inyección, URLs, HMAC, rate limit, roles, RAG y compositor.
@@ -80,7 +82,7 @@ Fuentes en `scripts/ingest-uvigo.mjs`. Para añadir una página, añade un objet
 
 ### Métricas
 
-`GET /api/metrics` agrega los últimos 7 días desde `audit_events` (`action = chat.completed`). Si Supabase no está configurado, usa un buffer en memoria.
+`GET /api/metrics` agrega los últimos 7 días desde `audit_events` (`action = chat.completed`) filtrados por la organización del usuario. Si Supabase no está configurado, usa un buffer en memoria.
 
 ### Diagnóstico IA
 
@@ -108,9 +110,14 @@ Pendiente: auditoría automatizada con `@axe-core/playwright` y revisión con le
 
 ## 6. i18n
 
-- `lib/i18n.tsx` mantiene ES/GL/EN para navegación, footer y CTAs.
+- Catálogo único en `lib/i18n/messages.ts` con tres locales: `es` (referencia de tipos), `gl` y `en`. `Messages = typeof es`, así que **GL y EN deben cubrir exactamente las mismas claves, arrays y objetos**; si falta una clave, `tsc` falla.
+- `lib/i18n/config.ts`: `LOCALES`, `Locale`, `DEFAULT_LOCALE`, `LOCALE_COOKIE` (`vigo-locale`), `LOCALE_LABELS` e `isLocale()`.
+- `lib/i18n/server.ts`: `getLocale()` lee la cookie con `cookies()` para componentes de servidor.
+- `lib/i18n.tsx`: `I18nProvider` recibe `initialLocale` del layout raíz, expone `locale`, `setLocale` y `t`. Al cambiar de idioma escribe la cookie, actualiza `document.documentElement.lang` y llama a `router.refresh()` para re-renderizar los componentes de servidor.
+- `app/layout.tsx`: `generateMetadata()` y `<html lang={locale}>` se resuelven en servidor. Al usar `cookies()` con Cache Components, el layout declara `export const instant = false`; por eso todas las rutas aparecen como dinámicas (`ƒ`) en el build.
 - El chat tiene diccionario propio ES/GL/EN y envía `locale` al backend.
-- Las páginas corporativas están en español. Siguiente fase: `next-i18next` con rutas `/[locale]/...` y extracción de textos.
+- Superficies deliberadamente monolingües: `/admin`, `/admin/*` y el agente flotante. Se marcan con `lang="es"`.
+- Alternativa no elegida: rutas `/[locale]/...`. Da SEO por idioma y permite estático, pero exige mover las 20 rutas, el proxy de auth y todos los enlaces. Se documenta como siguiente paso si el producto deja de ser demo.
 
 ## 7. Integraciones UVigo
 
@@ -134,8 +141,8 @@ Webhook: `POST /api/webhooks/uvigo` con cabecera `x-uvigo-signature: sha256=<hma
 ## 9. Limitaciones y siguientes pasos
 
 1. Añadir 10 créditos en OpenRouter para 1.000 peticiones free/día (o usar un modelo de pago).
-2. Migrar rate limiting a Redis para múltiples instancias.
+2. Configurar Upstash Redis para rate limiting distribuido (opcional; hay fallback a memoria).
 3. Configurar SSO SAML/OIDC con la UVigo.
 4. Firmar convenio para endpoints SEDE/Secretaría/Campus Remoto.
-5. Completar i18n de páginas corporativas y auditoría axe.
+5. Auditoría axe y revisión con lector de pantalla real (el i18n ya está completo).
 6. Sustituir el corpus estático por `pgvector` cuando el volumen crezca.

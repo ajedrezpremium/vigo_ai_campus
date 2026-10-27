@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
-  const summary = await getMetricsSummary(7);
+  const summary = await getMetricsSummary(7, viewer.organizationId);
   return NextResponse.json(
     {
       ...summary,

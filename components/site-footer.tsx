@@ -6,9 +6,31 @@ import { useI18n } from "@/lib/i18n";
 export function SiteFooter() {
   const { t } = useI18n();
   const cols = [
-    { title: "Producto", links: [{ href: "/plataforma", label: "Plataforma" }, { href: "/agentes", label: "Agentes" }, { href: "/precios", label: "Precios" }] },
-    { title: "Confianza", links: [{ href: "/seguridad", label: "Seguridad" }, { href: "/implantacion", label: "Implantación" }, { href: "/terminos", label: t.footer.terms }, { href: "/cookies", label: t.footer.cookies }] },
-    { title: "Sitio", links: [{ href: "/mapa-sitio", label: t.footer.sitemap }, { href: "/contacto", label: "Contacto" }, { href: "/demo", label: "Demo" }] },
+    {
+      title: t.footer.product,
+      links: [
+        { href: "/plataforma", label: t.nav.platform },
+        { href: "/agentes", label: t.nav.agents },
+        { href: "/precios", label: t.nav.pricing },
+      ],
+    },
+    {
+      title: t.footer.trust,
+      links: [
+        { href: "/seguridad", label: t.nav.security },
+        { href: "/implantacion", label: t.implementation.title },
+        { href: "/terminos", label: t.footer.terms },
+        { href: "/cookies", label: t.footer.cookies },
+      ],
+    },
+    {
+      title: t.footer.site,
+      links: [
+        { href: "/mapa-sitio", label: t.footer.sitemap },
+        { href: "/contacto", label: t.nav.contact },
+        { href: "/demo", label: t.nav.demo },
+      ],
+    },
   ];
   return (
     <footer className="border-t border-border/60 bg-muted/30">
@@ -16,9 +38,7 @@ export function SiteFooter() {
         <div className="grid gap-8 md:grid-cols-4">
           <div>
             <p className="font-semibold text-primary">VIGO AI CAMPUS</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Demo independiente y no oficial. Datos ficticios etiquetados.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{t.footer.tagline}</p>
           </div>
           {cols.map((c) => (
             <div key={c.title}>
@@ -33,9 +53,7 @@ export function SiteFooter() {
             </div>
           ))}
         </div>
-        <p className="mt-8 text-xs text-muted-foreground">
-          © 2026 VIGO AI CAMPUS. No respaldado por ninguna universidad. Fuentes de demo ficticias.
-        </p>
+        <p className="mt-8 text-xs text-muted-foreground">{t.footer.copyright}</p>
       </div>
     </footer>
   );

@@ -107,9 +107,9 @@ export function AiStatusPanel() {
               Añadir 10 créditos una sola vez desbloquea 1.000 peticiones free/día.
             </p>
           </div>
-          <Button render={<a href="https://openrouter.ai/settings/credits" target="_blank" rel="noreferrer" />} size="sm">
+          <a href="https://openrouter.ai/settings/credits" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
             Ver créditos <ExternalLink className="ml-2 h-3.5 w-3.5" />
-          </Button>
+          </a>
         </div>
       )}
 

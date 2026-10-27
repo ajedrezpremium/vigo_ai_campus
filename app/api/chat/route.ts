@@ -7,7 +7,7 @@ import { composeGroundedAnswer } from "@/lib/answer-composer";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
 import { inspectUserInput, wrapUntrustedContext } from "@/lib/security";
-import { checkRateLimit, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit";
+import { checkRateLimitAsync, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit";
 import { recordMetric, recordSecurityEvent } from "@/lib/metrics";
 
 
@@ -32,9 +32,9 @@ export async function POST(req: Request) {
   const requestId = crypto.randomUUID();
   const identifier = getClientIdentifier(req);
 
-  const burst = checkRateLimit(`chat:burst:${identifier}`, { limit: 8, windowMs: 60_000 });
+  const burst = await checkRateLimitAsync(`chat:burst:${identifier}`, { limit: 8, windowMs: 60_000 });
   const dailyLimit = Number(process.env.AI_DAILY_REQUEST_LIMIT || 30);
-  const daily = checkRateLimit(`chat:daily:${identifier}`, { limit: dailyLimit, windowMs: 86_400_000 });
+  const daily = await checkRateLimitAsync(`chat:daily:${identifier}`, { limit: dailyLimit, windowMs: 86_400_000 });
 
   if (!burst.allowed || !daily.allowed) {
     const limited = !burst.allowed ? burst : daily;
@@ -89,8 +89,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const viewer = await getViewer();
+    let viewer = null;
+    try {
+      viewer = await getViewer();
+    } catch {
+      viewer = null;
+    }
     const agent = classifyIntent(message);
+    const metricOrganizationId = viewer?.organizationId ?? null;
     const chunks = retrieve(message, {
       topK: 5,
       locale,
@@ -255,6 +261,7 @@ export async function POST(req: Request) {
       citationCount: citations.length,
       officialCitationCount: officialChunks.length,
       locale,
+      organizationId: metricOrganizationId,
     });
 
     return json(
@@ -274,7 +281,7 @@ export async function POST(req: Request) {
         },
         conversationId,
         persisted,
-        organization: viewer.organizationName,
+        organization: viewer?.organizationName ?? null,
         requestId,
         suggestedTicket: needsHuman
           ? {
@@ -293,8 +300,9 @@ export async function POST(req: Request) {
       );
     }
     const message = err instanceof Error ? err.message : "Error desconocido";
+    console.error("[chat] fallo al procesar la consulta", { requestId, error: message.slice(0, 300) });
     return json(
-      { error: "No se pudo procesar la consulta.", detail: message.slice(0, 160), requestId },
+      { error: "No se pudo procesar la consulta. Inténtalo de nuevo.", code: "internal_error", requestId },
       { status: 500, headers: { "X-Request-Id": requestId } },
     );
   }

@@ -13,7 +13,16 @@ export type MetricEvent = {
   citationCount: number;
   officialCitationCount: number;
   locale: string;
+  organizationId?: string | null;
   blocked?: boolean;
+};
+
+export type AuditInsertRow = {
+  organization_id: string | null;
+  action: "chat.completed";
+  target_type: "conversation";
+  target_id: string;
+  metadata: Record<string, unknown>;
 };
 
 type AuditRow = {
@@ -25,6 +34,28 @@ type AuditRow = {
 const globalStore = globalThis as typeof globalThis & { __vigoMetrics?: MetricEvent[] };
 const memory = (globalStore.__vigoMetrics ??= []);
 
+/** Fila de auditoría asociada a una métrica. El tenant es obligatorio al persistir. */
+export function toAuditRow(event: MetricEvent): AuditInsertRow {
+  return {
+    organization_id: event.organizationId ?? null,
+    action: "chat.completed",
+    target_type: "conversation",
+    target_id: event.id,
+    metadata: {
+      agent: event.agent,
+      model: event.model,
+      latency_ms: event.latencyMs,
+      input_tokens: event.inputTokens,
+      output_tokens: event.outputTokens,
+      resolved: event.resolved,
+      escalated: event.escalated,
+      citation_count: event.citationCount,
+      official_citation_count: event.officialCitationCount,
+      locale: event.locale,
+    },
+  };
+}
+
 export function recordMetric(event: MetricEvent) {
   memory.unshift(event);
   if (memory.length > 1000) memory.length = 1000;
@@ -35,23 +66,7 @@ export function recordMetric(event: MetricEvent) {
   // Persistencia best-effort: una métrica perdida no debe romper el chat.
   void admin
     .from("audit_events")
-    .insert({
-      action: "chat.completed",
-      target_type: "conversation",
-      target_id: event.id,
-      metadata: {
-        agent: event.agent,
-        model: event.model,
-        latency_ms: event.latencyMs,
-        input_tokens: event.inputTokens,
-        output_tokens: event.outputTokens,
-        resolved: event.resolved,
-        escalated: event.escalated,
-        citation_count: event.citationCount,
-        official_citation_count: event.officialCitationCount,
-        locale: event.locale,
-      },
-    })
+    .insert(toAuditRow(event))
     .then(({ error }) => {
       if (error) console.warn("[metrics] no se pudo persistir:", error.message);
     });
@@ -170,8 +185,12 @@ function summarize({ events, source, ticketsOpen, ticketsTotal, conversations }:
 
 export type MetricsSummary = ReturnType<typeof summarize>;
 
-export async function getMetricsSummary(days = 7): Promise<MetricsSummary> {
-  const admin = getSupabaseAdminClient();
+export async function getMetricsSummary(
+  days = 7,
+  organizationId?: string | null,
+  client: ReturnType<typeof getSupabaseAdminClient> = getSupabaseAdminClient(),
+): Promise<MetricsSummary> {
+  const admin = client;
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
   let events = memory.filter((e) => e.timestamp >= since);
   let source: "supabase" | "memory" = "memory";
@@ -179,10 +198,13 @@ export async function getMetricsSummary(days = 7): Promise<MetricsSummary> {
   let ticketsTotal = 0;
   let conversations = 0;
 
-  if (admin) {
+  // Solo se consulta con service role cuando hay un tenant identificado:
+  // sin organización, una consulta global filtraría datos de otros tenants.
+  if (admin && organizationId) {
     const { data, error } = await admin
       .from("audit_events")
       .select("created_at, action, metadata")
+      .eq("organization_id", organizationId)
       .eq("action", "chat.completed")
       .gte("created_at", since)
       .order("created_at", { ascending: false })
@@ -214,9 +236,13 @@ export async function getMetricsSummary(days = 7): Promise<MetricsSummary> {
     }
 
     const [{ count: open }, { count: total }, { count: convs }] = await Promise.all([
-      admin.from("tickets").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
-      admin.from("tickets").select("id", { count: "exact", head: true }),
-      admin.from("conversations").select("id", { count: "exact", head: true }),
+      admin
+        .from("tickets")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId)
+        .in("status", ["open", "in_progress"]),
+      admin.from("tickets").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
+      admin.from("conversations").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
     ]);
     ticketsOpen = open ?? 0;
     ticketsTotal = total ?? 0;
@@ -226,12 +252,17 @@ export async function getMetricsSummary(days = 7): Promise<MetricsSummary> {
   return summarize({ events, source, ticketsOpen, ticketsTotal, conversations });
 }
 
-export async function getRecentAudit(limit = 30) {
-  const admin = getSupabaseAdminClient();
-  if (!admin) return [];
+export async function getRecentAudit(
+  limit = 30,
+  organizationId?: string | null,
+  client: ReturnType<typeof getSupabaseAdminClient> = getSupabaseAdminClient(),
+) {
+  const admin = client;
+  if (!admin || !organizationId) return [];
   const { data, error } = await admin
     .from("audit_events")
     .select("id, created_at, action, target_type, target_id, metadata, organization_id")
+    .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) return [];

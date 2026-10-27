@@ -1,47 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowRight, BookOpenCheck, Pause, Play, ShieldCheck, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/lib/i18n";
 
-const SLIDES = [
-  {
-    src: "/campus/students-campus-vigo.jpg",
-    alt: "Estudiantes de la Universidade de Vigo reunidos frente al edificio de gestión del campus de Vigo",
-    label: "Campus de Vigo",
-    detail: "Estudiantes",
-  },
-  {
-    src: "/campus/class-professor.jpg",
-    alt: "Un profesor atiende a un grupo de estudiantes durante una visita a los centros de la UVigo",
-    label: "Docencia",
-    detail: "Profesorado y alumnado",
-  },
-  {
-    src: "/campus/library-central.jpg",
-    alt: "Vista interior de la sala de la Biblioteca Central de la Universidade de Vigo",
-    label: "Biblioteca Central",
-    detail: "Instalaciones",
-  },
-  {
-    src: "/campus/faculty-building.jpg",
-    alt: "Edificio de una facultad de la Universidade de Vigo en un día luminoso",
-    label: "Facultades",
-    detail: "Campus y servicios",
-  },
+const SLIDE_IMAGES = [
+  "/campus/students-campus-vigo.jpg",
+  "/campus/class-professor.jpg",
+  "/campus/library-central.jpg",
+  "/campus/faculty-building.jpg",
 ] as const;
 
-const STATS = [
-  { value: "23", label: "fuentes oficiales indexadas" },
-  { value: "3", label: "campus conectados" },
-  { value: "4", label: "perfiles de acceso" },
-  { value: "24/7", label: "orientación disponible" },
-];
-
 export function HomeHero() {
+  const { t } = useI18n();
+  const copy = t.hero;
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -60,36 +34,36 @@ export function HomeHero() {
   useEffect(() => {
     if (paused || reducedMotion) return;
     const timer = window.setInterval(() => {
-      setActive((current) => (current + 1) % SLIDES.length);
+      setActive((current) => (current + 1) % SLIDE_IMAGES.length);
     }, 6200);
     return () => window.clearInterval(timer);
   }, [paused, reducedMotion]);
 
   const goTo = useCallback((index: number) => {
-    setActive((index + SLIDES.length) % SLIDES.length);
+    setActive((index + SLIDE_IMAGES.length) % SLIDE_IMAGES.length);
   }, []);
 
-  const current = SLIDES[active];
-  const slideLabel = useMemo(() => `${current.label} · ${current.detail}`, [current]);
+  const slide = copy.slides[active];
+  const slideLabel = useMemo(() => `${slide.label} · ${slide.detail}`, [slide]);
 
   return (
     <section
       className="relative isolate overflow-hidden bg-[#f4faff]"
-      aria-roledescription="carrusel"
-      aria-label="Imágenes del campus de la Universidade de Vigo"
+      aria-roledescription={copy.carousel}
+      aria-label={copy.slidesRegion}
     >
       <div className="absolute inset-0">
-        {SLIDES.map((slide, index) => (
+        {SLIDE_IMAGES.map((src, index) => (
           <div
-            key={slide.src}
+            key={src}
             className={`absolute inset-0 transition-opacity duration-[1400ms] ease-out ${
               index === active ? "opacity-100" : "opacity-0"
             }`}
             aria-hidden={index !== active}
           >
             <Image
-              src={slide.src}
-              alt={slide.alt}
+              src={src}
+              alt={copy.slides[index].alt}
               fill
               priority={index === 0}
               sizes="100vw"
@@ -107,48 +81,46 @@ export function HomeHero() {
         <div>
           <Badge className="mb-5 border-cyan-200/70 bg-white/80 text-primary shadow-sm backdrop-blur">
             <span className="mr-2 inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]" />
-            Demo independiente · No oficial
+            {copy.badge}
           </Badge>
 
           <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 md:text-6xl">
-            Un campus.
+            {copy.title1}
             <br />
             <span className="bg-gradient-to-r from-primary via-blue-600 to-cyan-500 bg-clip-text text-transparent">
-              Un superagente.
+              {copy.title2}
             </span>
             <br />
-            Todos los servicios.
+            {copy.title3}
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 md:text-xl">
-            Orientación académica con IA para la Universidade de Vigo: matrícula, becas,
-            calendarios, movilidad y servicios, con <strong className="text-slate-900">fuentes oficiales citadas</strong> y
-            derivación humana cuando hace falta.
+            {copy.intro}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button render={<Link href="/app/chat" />} size="lg" className="shadow-lg shadow-primary/20">
-              Hablar con el superagente
+            <a href="/app/chat" className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90">
+              {copy.ctaChat}
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button render={<Link href="/plataforma" />} variant="outline" size="lg" className="bg-white/80 backdrop-blur">
-              Ver la plataforma
-            </Button>
+            </a>
+            <a href="/plataforma" className="inline-flex items-center gap-2 rounded-lg border bg-white/80 backdrop-blur px-5 py-3 text-sm font-medium text-slate-900 hover:bg-white/70">
+              {copy.ctaPlatform}
+            </a>
           </div>
 
           <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-600">
             <span className="inline-flex items-center gap-2">
               <BookOpenCheck className="h-4 w-4 text-cyan-600" />
-              Respuestas con enlaces a uvigo.gal
+              {copy.proofSources}
             </span>
             <span className="inline-flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
-              Sin inventar plazos ni requisitos
+              {copy.proofLimits}
             </span>
           </div>
 
           <p className="mt-6 text-xs text-slate-500">
-            Imágenes reales del campus:{" "}
+            {copy.imagesNote}{" "}
             <a
               href="https://www.uvigo.gal/es/universidad/conocenos"
               target="_blank"
@@ -157,7 +129,7 @@ export function HomeHero() {
             >
               Universidade de Vigo
             </a>
-            . Uso académico con atribución.
+            . {copy.imagesAttribution}
           </p>
         </div>
 
@@ -166,9 +138,9 @@ export function HomeHero() {
           <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-[0_24px_80px_rgba(15,64,120,0.18)] backdrop-blur-xl">
             <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem]">
               <Image
-                key={current.src}
-                src={current.src}
-                alt={current.alt}
+                key={SLIDE_IMAGES[active]}
+                src={SLIDE_IMAGES[active]}
+                alt={slide.alt}
                 fill
                 sizes="(max-width: 1024px) 100vw, 480px"
                 className="object-cover transition-transform duration-[1200ms] ease-out hover:scale-[1.03]"
@@ -176,21 +148,21 @@ export function HomeHero() {
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
               <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-white/40 bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-md">
                 <Sparkles className="h-3.5 w-3.5" />
-                Campus real · UVigo
+                {copy.campusTag}
               </div>
               <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3 text-white">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/70">{current.detail}</p>
-                  <p className="text-lg font-semibold">{current.label}</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/70">{slide.detail}</p>
+                  <p className="text-lg font-semibold">{slide.label}</p>
                 </div>
                 <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] backdrop-blur-md" aria-live="polite">
-                  {active + 1}/{SLIDES.length}
+                  {active + 1}/{SLIDE_IMAGES.length}
                 </span>
               </div>
             </div>
 
             <div className="mt-3 grid grid-cols-3 gap-2">
-              {STATS.slice(0, 3).map((stat) => (
+              {copy.stats.slice(0, 3).map((stat) => (
                 <div key={stat.label} className="rounded-2xl bg-white/80 px-3 py-2.5 text-center shadow-sm">
                   <p className="text-xl font-black text-primary">{stat.value}</p>
                   <p className="mt-0.5 text-[10px] leading-tight text-slate-500">{stat.label}</p>
@@ -199,14 +171,14 @@ export function HomeHero() {
             </div>
 
             <div className="mt-3 flex items-center justify-between gap-2 px-1">
-              <div className="flex items-center gap-1.5" role="tablist" aria-label="Elegir imagen del campus">
-                {SLIDES.map((slide, index) => (
+              <div className="flex items-center gap-1.5" role="tablist" aria-label={copy.chooseSlide}>
+                {SLIDE_IMAGES.map((src, index) => (
                   <button
-                    key={slide.src}
+                    key={src}
                     type="button"
                     role="tab"
                     aria-selected={index === active}
-                    aria-label={`Ver ${slide.label}`}
+                    aria-label={copy.viewSlide.replace("{label}", copy.slides[index].label)}
                     onClick={() => goTo(index)}
                     className={`h-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                       index === active ? "w-7 bg-primary" : "w-2 bg-slate-300 hover:bg-slate-400"
@@ -218,10 +190,10 @@ export function HomeHero() {
                 type="button"
                 onClick={() => setPaused((value) => !value)}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                aria-label={paused ? "Reanudar rotación de imágenes" : "Pausar rotación de imágenes"}
+                aria-label={paused ? copy.resume : copy.pause}
               >
                 {paused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
-                {paused ? "Reanudar" : "Pausar"}
+                {paused ? copy.resumeShort : copy.pauseShort}
               </button>
             </div>
           </div>
@@ -233,7 +205,7 @@ export function HomeHero() {
 
       <div className="relative border-t border-white/70 bg-white/70 backdrop-blur">
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 py-5 md:grid-cols-4">
-          {STATS.map((stat) => (
+          {copy.stats.map((stat) => (
             <div key={stat.label} className="flex items-baseline gap-2">
               <span className="text-2xl font-black tracking-tight text-primary">{stat.value}</span>
               <span className="text-xs leading-tight text-slate-500">{stat.label}</span>

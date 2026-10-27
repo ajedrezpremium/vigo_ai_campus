@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { CHAT_STORAGE_KEY, notifyConversationsChanged } from "@/lib/chat-storage";
 
 type Citation = {
   title: string;
@@ -34,10 +35,10 @@ type Message = {
 };
 type Conversation = { id: string; title: string; messages: Message[]; updatedAt: string };
 
-const STORAGE_KEY = "vigo-conversations-v2";
-
 const COPY = {
   es: {
+    banner:
+      "Demo independiente y no oficial. Las fuentes oficiales están enlazadas; las fuentes demo se etiquetan como tales. No se presentan solicitudes oficiales.",
     newChat: "Nueva conversación",
     noHistory: "Sin historial todavía.",
     empty: "Haz una consulta sobre matrícula, becas, calendario, movilidad o servicios del campus.",
@@ -64,8 +65,11 @@ const COPY = {
     ],
     ticketCreated: "Derivación creada",
     ticketNote: "El equipo responsable revisará tu caso. Esta demo no envía la solicitud a ningún servicio real.",
+    verifiedSources: "Fuentes verificadas",
   },
   gl: {
+    banner:
+      "Demo independente e non oficial. As fontes oficiais están ligadas; as fontes demo etiquétanse como tales. Non se presentan solicitudes oficiais.",
     newChat: "Nova conversación",
     noHistory: "Sen historial aínda.",
     empty: "Fai unha consulta sobre matrícula, bolsas, calendario, mobilidade ou servizos do campus.",
@@ -92,8 +96,11 @@ const COPY = {
     ],
     ticketCreated: "Derivación creada",
     ticketNote: "O equipo responsable revisará o teu caso. Esta demo non envía a solicitude a ningún servizo real.",
+    verifiedSources: "Fontes verificadas",
   },
   en: {
+    banner:
+      "Independent, unofficial demo. Official sources are linked; demo sources are labelled as such. No official applications are submitted.",
     newChat: "New conversation",
     noHistory: "No history yet.",
     empty: "Ask about enrolment, scholarships, calendars, mobility or campus services.",
@@ -120,13 +127,14 @@ const COPY = {
     ],
     ticketCreated: "Referral created",
     ticketNote: "The responsible team will review your case. This demo does not send the request to a real service.",
+    verifiedSources: "Verified sources",
   },
 } as const;
 
 function loadConversations(): Conversation[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(CHAT_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as Conversation[]) : [];
   } catch {
     return [];
@@ -135,7 +143,8 @@ function loadConversations(): Conversation[] {
 
 function saveConversations(list: Conversation[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(list));
+  notifyConversationsChanged();
 }
 
 export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: boolean }) {
@@ -285,7 +294,7 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
     <div className="mx-auto max-w-6xl px-4 py-6">
       {showDemoBanner && (
         <div className="mb-4 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-950">
-          Demo independiente y no oficial. Las fuentes oficiales están enlazadas; las fuentes demo se etiquetan como tales. No se presentan solicitudes oficiales.
+          {copy.banner}
         </div>
       )}
 
@@ -363,7 +372,7 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
                       {m.role === "assistant" && (
                         <div className="mb-2 flex flex-wrap items-center gap-1.5">
                           {m.agent && <Badge variant="secondary" className="text-[10px]">{m.agent}</Badge>}
-                          {m.aiGenerated === false && <Badge variant="outline" className="text-[10px]">Fuentes verificadas</Badge>}
+                          {m.aiGenerated === false && <Badge variant="outline" className="text-[10px]">{copy.verifiedSources}</Badge>}
                         </div>
                       )}
 

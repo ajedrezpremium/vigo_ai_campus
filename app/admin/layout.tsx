@@ -41,12 +41,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!can(viewer.role, "admin.access")) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16">
+      <div lang="es" className="mx-auto max-w-2xl px-4 py-16">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
           <h1 className="text-2xl font-bold text-amber-950">Acceso restringido</h1>
           <p className="mt-2 text-sm text-amber-800">
             Tu cuenta tiene rol <strong>{roleLabel(viewer.role)}</strong>. El panel de administración requiere rol PAS o administración.
           </p>
+          {viewer.mode === "demo" && (
+            <p className="mt-2 text-xs text-amber-700">
+              Estás en modo demo sin privilegios. Para explorar el panel en local, define
+              {" "}<code className="rounded bg-amber-100 px-1">DEMO_ADMIN=true</code>.
+            </p>
+          )}
           <Link href="/app" className="mt-5 inline-block rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
             Volver a mi espacio
           </Link>
@@ -59,7 +65,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <AdminProviders>
-      <div className="min-h-[70vh] bg-slate-50">
+      <div lang="es" className="min-h-[70vh] bg-slate-50">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[230px_1fr]">
           <aside>
             <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">

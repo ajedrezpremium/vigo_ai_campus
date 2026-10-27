@@ -160,6 +160,7 @@ export function FloatingAgent() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
+          lang="es"
           title="Super Agente IA"
           className="group fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-cyan-500 to-indigo-600 text-white shadow-[0_12px_32px_rgba(37,99,235,0.5)] ring-4 ring-white/40 transition-all hover:scale-110 hover:shadow-[0_16px_40px_rgba(37,99,235,0.6)]"
           aria-label="Super Agente IA"
@@ -177,6 +178,7 @@ export function FloatingAgent() {
       {open && (
         <div
           ref={panelRef}
+          lang="es"
           className={cn(
             "fixed z-50 flex flex-col border bg-background shadow-2xl",
             expanded ? "rounded-none" : "rounded-2xl",

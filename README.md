@@ -19,7 +19,7 @@ npm run dev                  # http://localhost:3000
 Comprobaciones:
 
 ```bash
-npm test          # 11 tests de seguridad, roles, RAG y compositor
+npm test          # 18 tests de seguridad, roles, aislamiento multi-tenant, RAG y compositor
 npm run lint
 npm run build
 ```
@@ -36,6 +36,8 @@ npm run build
 | `LLM_API_KEY` | sí | Clave de OpenRouter |
 | `LLM_MODEL` | no | Primer modelo free; por defecto `google/gemma-4-31b-it:free` |
 | `LLM_MODELS` | no | Lista separada por comas para fallback |
+| `DEMO_ADMIN` | no | `true` solo en local: abre `/admin` sin Supabase. En producción el modo demo es estudiante. |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | no | Rate limiting distribuido; si no se definen, se usa memoria por instancia. |
 | `AI_MAX_OUTPUT_TOKENS` | no | 900 por defecto |
 | `AI_DAILY_REQUEST_LIMIT` | no | 30 consultas/día por IP (además de 8/min) |
 | `ADMIN_EMAILS` | no | Emails que se provisionan como administradores |
@@ -109,8 +111,12 @@ supabase db push
 
 - Skip link, navegación con `aria-label`, menú móvil, foco visible y `prefers-reduced-motion`.
 - Chat con `role="log"`, `aria-live`, etiquetas, contador de caracteres y estados de carga/error.
-- Selector ES/GL/EN en cabecera; el chat traduce sus cadenas y responde en el idioma elegido.
-- Las páginas de contenido corporativo siguen en español; la migración completa a `next-i18next` está documentada como siguiente fase.
+- Selector ES/GL/EN en cabecera. El idioma se guarda en la cookie `vigo-locale`, el layout raíz lo lee en servidor y renderiza `<html lang>`, metadatos y textos en el primer byte (sin parpadeo ni *hydration mismatch*).
+- Todo el contenido público está traducido: portada, plataforma, agentes, demo, seguridad, precios, contacto, implantación, mapa del sitio, legal, login, dashboard, historial, solicitudes y páginas de error.
+- Catálogo único en `lib/i18n/messages.ts` (ES es la referencia de tipos; GL y EN deben cubrir las mismas claves). Helpers: `lib/i18n/config.ts` (locales y cookie) y `lib/i18n/server.ts` (`getLocale()`).
+- El chat mantiene su diccionario propio y envía `locale` al backend.
+- El panel `/admin` y el agente flotante son superficies internas en español y se marcan con `lang="es"` para que el lector de pantalla no las pronuncie con el idioma de la página.
+- Coste asumido: leer cookies en el layout raíz hace que **todas las rutas se rendericen dinámicamente** (`ƒ`). Para volver a caché estática o SEO por idioma habría que migrar a `app/[locale]/...` reutilizando el mismo catálogo.
 
 ## Despliegue
 
@@ -125,12 +131,13 @@ CI/CD: `.github/workflows/deploy.yml` ejecuta lint, tests, build, migraciones Su
 
 - [Guía técnica](docs/GUIA_TECNICA.md)
 - [Plan de mejora ejecutado](docs/PLAN_MEJORA_EJECUTADO.md)
+- [Plan de mejora V2](docs/PLAN_MEJORA_V2.md)
 - [Análisis de la web UVigo](docs/ANALISIS_WEB_UVIGO_PUNTOS_DEBILES.md)
 - [Propuesta VIGO AI CAMPUS](docs/PROPUESTA_VIGO_AI_CAMPUS.md)
 
 ## Límites conocidos
 
 - Los endpoints reales de SEDE, Secretaría y Campus Remoto requieren convenio y credenciales de la UVigo; los adaptadores devuelven `configured: false` y no inventan datos.
-- El rate limiting en memoria es por instancia. Para producción con varias instancias, sustituir por Upstash Redis/Vercel KV.
+- El rate limiting usa Upstash Redis si `UPSTASH_REDIS_REST_URL` y `_TOKEN` están definidos; si no, cae a memoria por instancia.
 - Las imágenes del campus son de `uvigo.gal` y se usan con atribución en un contexto académico. Para uso comercial hay que obtener licencia.
 - El SSO institucional (SAML/OIDC) requiere configuración del proveedor UVigo; la app usa Supabase Auth con email/contraseña.

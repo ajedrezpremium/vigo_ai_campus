@@ -9,7 +9,7 @@ export async function GET() {
   if (!can(viewer.role, "audit.read")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
-  const events = await getRecentAudit(40);
+  const events = await getRecentAudit(40, viewer.organizationId);
   return NextResponse.json({ events, source: events.length ? "supabase" : "empty" }, { headers: { "Cache-Control": "no-store" } });
 }
 

@@ -1,28 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getLocale } from "@/lib/i18n/server";
+import { messages } from "@/lib/i18n/messages";
 
-const plans = [
-  { name: "Demo", price: "Gratis", text: "Datos ficticios, sin soporte." },
-  { name: "Campus Start", price: "300–600 €/mes", text: "Hipótesis orientativa para validación." },
-  { name: "Campus Pro", price: "900–1.800 €/mes", text: "Hipótesis orientativa para validación." },
-  { name: "Enterprise", price: "Desde 2.500 €/mes", text: "Implantación y seguridad a medida." },
-];
+export default async function PreciosPage() {
+  const locale = await getLocale();
+  const t = messages[locale].pricing;
 
-export default function PreciosPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary">Precios</h1>
-      <p className="mt-2 text-muted-foreground">
-        Valores orientativos para validación, no ofertas contractuales.
-      </p>
+      <h1 className="text-3xl font-bold text-primary">{t.title}</h1>
+      <p className="mt-2 text-muted-foreground">{t.intro}</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {plans.map((p) => (
-          <Card key={p.name}>
+        {t.plans.map((plan) => (
+          <Card key={plan.name}>
             <CardHeader>
-              <CardTitle className="text-base">{p.name}</CardTitle>
+              <CardTitle className="text-base">{plan.name}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg font-semibold text-primary">{p.price}</p>
-              <p className="mt-2 text-sm text-muted-foreground">{p.text}</p>
+              <p className="text-lg font-semibold text-primary">{plan.price}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{plan.text}</p>
             </CardContent>
           </Card>
         ))}

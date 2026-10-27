@@ -2,6 +2,7 @@ import { cache } from "react";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin";
 import { normalizeRole, type AppRole, type Permission, can } from "@/lib/roles";
+import { demoRole, resolveProvisionRole } from "@/lib/tenant";
 
 export type Viewer = {
   mode: "demo" | "supabase";
@@ -13,21 +14,43 @@ export type Viewer = {
   organizationSlug: string | null;
 };
 
-const DEMO_VIEWER: Viewer = {
-  mode: "demo",
-  user: null,
-  role: "admin",
-  membershipRole: "org_admin",
-  organizationId: null,
-  organizationName: "Demo VIGO AI CAMPUS",
-  organizationSlug: "demo-vigo",
+const DEMO_ORGANIZATION = {
+  name: "Demo VIGO AI CAMPUS",
+  slug: "demo-vigo",
 };
 
+/**
+ * En modo demo (sin Supabase) el visitante es estudiante por defecto.
+ * El panel de administración solo se abre con `DEMO_ADMIN=true` explícito:
+ * nunca se debe degradar a admin por faltar una variable de entorno.
+ */
+export function isDemoAdminEnabled() {
+  return process.env.DEMO_ADMIN === "true";
+}
+
+export function getDemoViewer(): Viewer {
+  const role = demoRole(isDemoAdminEnabled());
+  return {
+    mode: "demo",
+    user: null,
+    role,
+    membershipRole: role === "admin" ? "org_admin" : null,
+    organizationId: null,
+    organizationName: DEMO_ORGANIZATION.name,
+    organizationSlug: DEMO_ORGANIZATION.slug,
+  };
+}
+
+/**
+ * El rol de una membresía nueva se decide en `lib/tenant.ts`
+ * (`resolveProvisionRole`), que se prueba de forma aislada.
+ */
+
 export const getViewer = cache(async (): Promise<Viewer> => {
-  if (!isSupabaseConfigured()) return DEMO_VIEWER;
+  if (!isSupabaseConfigured()) return getDemoViewer();
 
   const supabase = await getSupabaseServerClient();
-  if (!supabase) return { ...DEMO_VIEWER, mode: "demo" };
+  if (!supabase) return getDemoViewer();
 
   const {
     data: { user },
@@ -138,8 +161,12 @@ export async function provisionMembership(userId: string, email: string | null) 
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  const isBootstrapAdmin = !count || allowlist.includes((email ?? "").toLowerCase());
-  const role = isBootstrapAdmin ? "org_admin" : "user";
+  const role = resolveProvisionRole({
+    email,
+    adminEmails: allowlist,
+    adminCount: count ?? 0,
+    isProduction: process.env.NODE_ENV === "production",
+  });
 
   const { error: insertError } = await admin.from("memberships").insert({
     organization_id: organization.id,

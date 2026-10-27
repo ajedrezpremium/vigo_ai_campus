@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
-import { checkRateLimit, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit";
+import { checkRateLimitAsync, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit";
 
 
 const BodySchema = z.object({
@@ -12,7 +12,7 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const limit = checkRateLimit(`feedback:${getClientIdentifier(req)}`, { limit: 20, windowMs: 3_600_000 });
+  const limit = await checkRateLimitAsync(`feedback:${getClientIdentifier(req)}`, { limit: 20, windowMs: 3_600_000 });
   if (!limit.allowed) {
     return NextResponse.json({ error: "Demasiadas valoraciones" }, { status: 429, headers: rateLimitHeaders(limit) });
   }
