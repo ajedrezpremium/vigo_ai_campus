@@ -28,15 +28,30 @@ Navegador
 
 ### Flujo de una consulta
 
-1. El cliente envía `{ message, locale, conversationId }` a `/api/chat`.
+1. El cliente envía `{ message, locale, conversationId, stream? }` a `/api/chat`.
 2. `lib/security.ts` normaliza, limita a 2.000 caracteres y detecta prompt injection.
 3. Rate limit: 8/min y `AI_DAILY_REQUEST_LIMIT`/día por IP+UA.
-4. `lib/retrieval.ts` recupera hasta 5 fragmentos; las fuentes oficiales pesan 1,58× frente a 0,58× de las demo.
-5. Se construye un prompt con fuentes delimitadas por `<fuente>` y la instrucción explícita de tratarlas como datos.
-6. `lib/llm.ts` consulta OpenRouter con la lista de modelos free y fallback secuencial.
-7. Si hay 429 de cuota diaria, `lib/answer-composer.ts` genera una respuesta extractiva profesional con las mismas fuentes.
-8. Se persiste la conversación (si hay usuario y organización) y se registra una métrica en `audit_events`.
-9. La respuesta incluye `citations`, `confidence`, `sourceSummary`, `notice` y `suggestedTicket`.
+4. `lib/retrieval.ts` recupera hasta 5 fragmentos; las fuentes oficiales pesan 1,58× frente a 0,58× de las demo, y las `stale` se penalizan un 18 %.
+5. `lib/evidence.ts` comprueba alcance y cobertura. Si la consulta es de otra universidad, pide datos personales o la cobertura del mejor fragmento es < 0,6, se responde con abstención y `needsHuman: true`.
+6. `lib/prompts/chat.ts` construye el prompt versionado (`CHAT_PROMPT_VERSION`) delimitando cada fuente con `<fuente>` como dato no ejecutable.
+7. `lib/llm.ts` consulta OpenRouter con la lista de modelos free y fallback secuencial. Con `stream: true`, `callLLMStream()` emite deltas y `/api/chat` responde NDJSON.
+8. Si hay 429 de cuota diaria o el modelo falla antes de emitir texto, `lib/answer-composer.ts` genera una respuesta extractiva profesional con las mismas fuentes.
+9. Se persiste la conversación (si hay usuario y organización) y se registra una métrica en `audit_events`.
+10. La respuesta incluye `citations`, `confidence`, `sourceSummary`, `promptVersion`, `notice` y `suggestedTicket`.
+
+### Streaming
+
+`POST /api/chat` con `{ "stream": true }` devuelve `application/x-ndjson`, una línea JSON por evento:
+
+| Evento | Contenido |
+|---|---|
+| `meta` | agente, citas, confianza, `promptVersion`, `sourceSummary`, `requestId` |
+| `notice` | aviso de cuota, error o ausencia de evidencia |
+| `delta` | fragmento de texto de la respuesta |
+| `done` | respuesta completa y metadatos finales (mismo cuerpo que el modo JSON) |
+| `error` | fallo irrecuperable del stream |
+
+Sin `stream: true` se mantiene la respuesta JSON original, de modo que clientes y pruebas antiguas siguen funcionando.
 
 ## 2. Modelo de datos
 
@@ -68,7 +83,7 @@ Navegador
 - **Modo demo**: el visitante es `estudiante`. Solo `DEMO_ADMIN=true` (local) abre `/admin`.
 - **Webhooks**: HMAC SHA-256 con `timingSafeEqual`.
 - **Secretos**: `SUPABASE_SERVICE_ROLE_KEY` y `LLM_API_KEY` solo en servidor; nunca en `NEXT_PUBLIC_*`.
-- **Tests**: `tests/security.test.ts` cubre inyección, URLs, HMAC, rate limit, roles, RAG y compositor; `tests/observability.test.ts` cubre request ids, buffer, aislamiento por organización y DSN. Total: 30.
+- **Tests**: `tests/security.test.ts` cubre inyección, URLs, HMAC, rate limit, roles, RAG y compositor; `tests/observability.test.ts` cubre request ids, buffer, aislamiento por organización y DSN; `tests/prompts.test.ts` protege el formato del prompt y `tests/evaluation.test.ts` fija los umbrales de calidad. Total: 44.
 
 ## 4. Operación
 
@@ -79,6 +94,25 @@ npm run ingest:uvigo
 ```
 
 Fuentes en `scripts/ingest-uvigo.mjs`. Para añadir una página, añade un objeto `{ id, path, title }` y vuelve a ejecutar. El script escribe `data/uvigo-corpus.ts` y `.json`.
+
+La ingesta es incremental y usa `checksum` para no reescribir contenido idéntico:
+
+- `fetchedAt`: fecha en la que se capturó el contenido publicado.
+- `lastReviewedAt`: última vez que ese contenido se dio por bueno.
+- `lastCheckedAt`: última comprobación HTTP correcta.
+- `status: "stale"`: la fuente falló en la última ejecución y se conserva la copia anterior; el `retrieval` la penaliza.
+- `lastError`: motivo del último fallo.
+
+Si una fuente nueva falla y no hay copia previa, queda en `missing` y no se inventa un documento. La fusión está en `mergeCorpus()` y se prueba sin red en `tests/ingestion.test.ts`.
+
+### Evaluación de IA
+
+```bash
+npm run eval          # compositor determinista; sin red ni cuota
+npm run eval:llm      # modelo real; requiere .env.local
+```
+
+El set vive en `lib/evaluation/dataset.ts` (30 preguntas: 22 respondibles y 8 de abstención). `lib/evaluation/run.ts` calcula *recall*, cobertura, abstención, citas y *faithfulness* operativa. Los informes se escriben en `eval/results/` e incluyen `promptVersion`, modelo y latencia por pregunta. El compositor determinista es el que se ejecuta en CI.
 
 ### Métricas
 

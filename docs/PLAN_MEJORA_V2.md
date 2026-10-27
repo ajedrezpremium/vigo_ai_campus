@@ -13,7 +13,7 @@ Actualizado: 2026-10-27.
 | **Fase 0** — desbloquear CI y regresiones | ✅ Completada | `next.config.ts` sin loader inexistente; `language-switcher` tipado; rutas de historial/solicitudes enlazadas; `proxy.ts` sustituye a `middleware.ts`; 500 sin detalle interno; 0 warnings de lint; `tsc` limpio; `build` verde. |
 | **Fase 1** — seguridad y multi-tenant | ✅ Completada | Modo demo *fail-closed* (`lib/tenant.ts`), filtro `organization_id` en métricas/auditoría, `organization_id` en `recordMetric`, bootstrap de admin solo con `ADMIN_EMAILS`, rate limit con Upstash opcional, 7 tests nuevos (18 en total). |
 | **Fase 2** — producto y calidad | ✅ Completada | Feedback 👍/👎 ya existía en el chat; añadidos `error.tsx`, `not-found.tsx` y `loading.tsx`. i18n completo ES/GL/EN con cookie y renderizado en servidor (#14). Auditoría axe en 6 páginas + locale (#15): 7/7 en verde. Observabilidad con `requestId`, logs JSON, persistencia en `audit_events` y Sentry opcional (#16): 12 tests nuevos (30 en total) y smoke test E2E verificado. |
-| **Fase 3** — IA y datos | ⏳ Pendiente | pgvector, ingesta incremental, set de evaluación, streaming. |
+| **Fase 3** — IA y datos | 🟡 Parcial | Prompts versionados (`lib/prompts/chat.ts`, `2026-10-27.1`), arnés de evaluación con 30 preguntas y umbrales (`lib/evaluation`, `npm run eval`), *gate* de evidencia/abstención (`lib/evidence.ts`), streaming NDJSON real con *fallback* extractivo e ingesta incremental con `checksum`/`stale`. Pendientes: pgvector en Supabase (#17) y cierre del bucle de feedback. |
 
 Decisión de rutas: se mantuvieron `/historial` y `/solicitudes` en la raíz (trabajo ya iniciado) y se actualizaron el dashboard y el proxy, en lugar de devolverlas a `/app`. `/solicitudes` exige sesión; `/historial` es local al navegador.
 
@@ -158,14 +158,14 @@ Objetivo: que el modo demo no sea una puerta trasera y que cada organización ve
 
 ### Fase 3 — IA, datos y evaluación (L, 1–2 semanas)
 
-- [ ] **#17** Mover el corpus a Supabase + `pgvector`; el `retrieval` actual queda como *fallback* offline.
-- [ ] Pipeline de ingesta incremental: `checksum`, `last_reviewed_at`, estados `stale/failed`, sin reindexar todo.
-- [ ] **Evaluación**: 30–50 preguntas reales con respuesta esperada y fuente; medir *faithfulness*, citas correctas y abstención. Guardar resultados por versión de prompt/modelo.
-- [ ] Streaming de respuesta (`ReadableStream`) manteniendo el compositor como *fallback*.
-- [ ] Versionado de prompts en `lib/prompts/` y pruebas de regresión de formato.
+- [ ] **#17** Mover el corpus a Supabase + `pgvector`; el `retrieval` actual queda como *fallback* offline. **Bloqueado:** requiere proyecto Supabase, extensión `vector` y proveedor de embeddings; no verificable en local sin credenciales.
+- [x] Pipeline de ingesta incremental: `checksum`, `lastReviewedAt`/`lastCheckedAt`, estados `official/stale` y conservación de la última copia válida cuando una fuente falla. No reindexa todo el corpus.
+- [x] **Evaluación**: 30 preguntas (22 respondibles, 8 de abstención) con documento esperado; mide *recall*, cobertura, abstención, citas y *faithfulness* operativa (fechas/URLs/citas dentro del contexto). Resultados por versión de prompt en `eval/results/`.
+- [x] Streaming de respuesta (`ReadableStream`, NDJSON `meta`/`notice`/`delta`/`done`/`error`) manteniendo el compositor como *fallback* y la respuesta JSON para clientes antiguos.
+- [x] Versionado de prompts en `lib/prompts/` y pruebas de regresión de formato.
 - [ ] Cerrar el bucle de feedback: valoraciones → revisión de conocimiento → alerta de fuentes obsoletas.
 
-**Criterio de aceptación:** *faithfulness* ≥ 0,9 en el set de evaluación; ninguna respuesta con URL fuera de `uvigo.gal`; p95 < 4 s en streaming.
+**Criterio de aceptación:** *faithfulness* ≥ 0,9 en el set de evaluación; ninguna respuesta con URL fuera de `uvigo.gal`; p95 < 4 s en streaming. **Estado:** 1,000 con compositor y en la muestra real; 0 URLs externas; el streaming se verificó funcionalmente (pendiente medir p95 con carga).
 
 ### Fase 4 — Opcional / negocio (solo si el TFG lo pide)
 
@@ -199,7 +199,7 @@ Objetivo: que el modo demo no sea una puerta trasera y que cada organización ve
 | B17 | i18n por rutas | 2 | L | `app/[locale]`, `lib/i18n.tsx` |
 | B18 | axe + correcciones | 2 | M | `tests/e2e`, componentes |
 | B19 | Sentry + logs con `requestId` | 2 | M | `next.config.ts`, rutas |
-| B20 | pgvector e ingesta incremental | 3 | L | `supabase/migrations`, `lib/retrieval.ts` |
+| B20 | pgvector e ingesta incremental | 3 | L | `supabase/migrations`, `lib/retrieval.ts`, `scripts/ingest-uvigo.mjs` (ingesta ✅, pgvector pendiente) |
 | B21 | Set de evaluación y métricas de IA | 3 | L | `tests/eval`, `scripts` |
 | B22 | Streaming de respuestas | 3 | M | `app/api/chat`, `chat-interface.tsx` |
 
@@ -226,10 +226,8 @@ Una tarea se considera terminada cuando:
 ## 7. Próximos tres pasos
 
 1. **Hecho:** Fases 0, 1 y 2 completas (build, tipos, rutas, proxy, i18n, axe y observabilidad).
-2. **Después:** Fase 3, empezando por B20 (pgvector) y B21 (set de evaluación); B22 (streaming) al final para no complicar el *fallback*.
-3. **Revisión:** volver a ejecutar `npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run build` y `npm run test:a11y`, y actualizar la tabla de la sección 0.
-
----
+2. **Hecho:** Fase 3 parcial — prompts versionados, evaluación (B21), streaming (B22) e ingesta incremental (parte de B20). Pendientes: pgvector (#17), bucle de feedback y medición de p95.
+3. **Siguiente:** si hay Supabase disponible, crear la migración `vector` e ingesta a `knowledge_documents`; después, cerrar el bucle de feedback y repetir la evaluación real (`npm run eval:llm`).
 
 ### Anexo — Verificación rápida
 
@@ -237,8 +235,10 @@ Una tarea se considera terminada cuando:
 npm run lint
 npx tsc --noEmit
 npm test
+npm run eval          # compositor determinista, apto para CI
+npm run eval:llm      # modelo real; requiere .env.local y cuota
 npm run build
-npm run test:a11y   # requiere build previo y chromium
+npm run test:a11y     # requiere build previo y chromium
 ```
 
-Estado actual: `lint` 0 errores / 0 warnings · `tsc` limpio · `test` 30/30 · `build` verde · `test:a11y` 7/7.
+Estado actual: `lint` 0 errores / 0 warnings · `tsc` limpio · `test` 44/44 · `build` verde · `test:a11y` 7/7 · `eval` 30/30 con todas las métricas a 1,000.

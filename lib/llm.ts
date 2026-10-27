@@ -299,3 +299,169 @@ export async function callLLM(params: {
   cache.lastError = lastError.slice(0, 240);
   throw new Error(lastError);
 }
+
+/**
+ * Variante en streaming compatible con OpenRouter (SSE). Si un modelo falla
+ * antes de emitir texto se prueba el siguiente; si falla después, se propaga
+ * el error para no mezclar dos respuestas. El llamador decide el fallback
+ * extractivo.
+ */
+export async function callLLMStream(
+  params: { system: string; user: string; maxTokens?: number },
+  onDelta: (text: string) => void,
+): Promise<LLMResult> {
+  const provider = getProviderName();
+  const key = apiKey();
+  const maxTokens = params.maxTokens ?? Number(process.env.AI_MAX_OUTPUT_TOKENS || 900);
+  const models = getModelList();
+
+  if (!key) throw new LLMNotConfiguredError();
+  if (provider !== "openrouter") throw new Error(`Proveedor LLM no soportado: ${provider}`);
+
+  const quota = await getLLMQuota();
+  if (quota && quota.remaining <= 0 && process.env.LLM_SKIP_ON_QUOTA !== "false") {
+    throw new LLMQuotaExceededError(quota);
+  }
+
+  let lastError = "sin modelos disponibles";
+  let attempts = 0;
+
+  for (const model of models) {
+    attempts += 1;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60_000);
+    let produced = false;
+    let content = "";
+    let usedModel = model;
+    let inputTokens: number | undefined;
+    let outputTokens: number | undefined;
+
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://vigo-ai-campus.vercel.app",
+          "X-Title": "VIGO AI CAMPUS",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: params.system },
+            { role: "user", content: params.user },
+          ],
+          max_tokens: maxTokens,
+          temperature: 0.15,
+          top_p: 0.9,
+          stream: true,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        lastError = `HTTP ${res.status}: ${text.slice(0, 220)}`;
+        if (isDailyQuotaError(res.status, text)) {
+          const refreshed = await getLLMQuota(true);
+          cache.lastError = "Cuota diaria de modelos gratuitos agotada";
+          throw new LLMQuotaExceededError(
+            refreshed ?? quota ?? { limit: 50, used: 50, remaining: 0, resetAt: nextUtcMidnight(), freeTier: true },
+          );
+        }
+        if (res.status === 429) {
+          await sleep(1200);
+          continue;
+        }
+        if (res.status === 404 || res.status >= 500) continue;
+        throw new Error(lastError);
+      }
+
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!contentType.includes("text/event-stream")) {
+        // Algunos despliegues ignoran `stream`; se acepta la respuesta JSON.
+        const parsed = ResponseSchema.parse(await res.json());
+        const text = parsed.choices[0]?.message?.content?.trim();
+        if (!text) {
+          lastError = "Respuesta vacía del modelo";
+          continue;
+        }
+        onDelta(text);
+        content = text;
+        produced = true;
+        usedModel = parsed.model || model;
+        inputTokens = parsed.usage?.prompt_tokens;
+        outputTokens = parsed.usage?.completion_tokens;
+      } else {
+        const reader = res.body?.getReader();
+        if (!reader) {
+          lastError = "Respuesta sin cuerpo en streaming";
+          continue;
+        }
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line.startsWith("data:")) continue;
+            const data = line.slice(5).trim();
+            if (!data || data === "[DONE]") continue;
+
+            let payload: {
+              model?: string;
+              usage?: { prompt_tokens?: number; completion_tokens?: number };
+              error?: { message?: string };
+              choices?: { delta?: { content?: string | null } }[];
+            };
+            try {
+              payload = JSON.parse(data);
+            } catch {
+              continue;
+            }
+            if (payload.error) throw new Error(payload.error.message ?? "error en streaming");
+            if (payload.model) usedModel = payload.model;
+            if (payload.usage) {
+              inputTokens = payload.usage.prompt_tokens ?? inputTokens;
+              outputTokens = payload.usage.completion_tokens ?? outputTokens;
+            }
+            const delta = payload.choices?.[0]?.delta?.content;
+            if (typeof delta === "string" && delta) {
+              produced = true;
+              content += delta;
+              onDelta(delta);
+            }
+          }
+        }
+      }
+
+      if (!content.trim()) {
+        lastError = "Respuesta vacía del modelo";
+        continue;
+      }
+
+      cache.calls += 1;
+      cache.lastError = undefined;
+      cache.lastSuccess = { model: usedModel, at: new Date().toISOString() };
+      cache.status = undefined;
+      return { content, model: usedModel, inputTokens, outputTokens, attempts };
+    } catch (err) {
+      if (err instanceof LLMQuotaExceededError) throw err;
+      lastError = err instanceof Error ? err.message : "error desconocido";
+      if (produced) throw new Error(`stream interrumpido: ${lastError}`);
+      continue;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  cache.lastError = lastError.slice(0, 240);
+  throw new Error(lastError);
+}
+

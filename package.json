@@ -9,6 +9,8 @@
     "lint": "eslint",
     "test": "tsx --test tests/*.test.ts",
     "test:a11y": "playwright test",
+    "eval": "tsx scripts/eval.ts",
+    "eval:llm": "node --env-file=.env.local --import tsx scripts/eval.ts --llm",
     "ingest:uvigo": "node scripts/ingest-uvigo.mjs",
     "check:security": "npm test"
   },

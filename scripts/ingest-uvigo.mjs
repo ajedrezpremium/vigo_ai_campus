@@ -8,6 +8,10 @@
  * - Extrae el contenido principal (no navegación ni pie).
  * - Genera data/uvigo-corpus.ts con texto, URL oficial, fecha de captura y checksum.
  *
+ * La ingesta es incremental: si una fuente no cambió se conserva el contenido
+ * ya versionado (solo se actualiza `lastCheckedAt`) y si una fuente falla se
+ * mantiene la última copia válida marcada como `stale`, en lugar de eliminarla.
+ *
  * El corpus generado se versiona para que el despliegue sea reproducible y no
  * dependa de la red en tiempo de ejecución. Vuelve a ejecutar este script para
  * refrescar las fuentes.
@@ -15,9 +19,9 @@
 import * as cheerio from "cheerio";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -231,8 +235,15 @@ export type OfficialDocument = {
   locale: "es" | "gl" | "en";
   organization: string;
   kind: "html" | "pdf";
-  status: "official";
+  status: "official" | "stale";
+  /** Fecha en la que se capturó el contenido publicado. */
   fetchedAt: string;
+  /** Última vez que el contenido se dio por bueno (humano o ingesta). */
+  lastReviewedAt: string;
+  /** Última comprobación HTTP correcta de la fuente. */
+  lastCheckedAt: string;
+  /** Motivo por el que la fuente quedó obsoleta, si aplica. */
+  lastError?: string;
   checksum: string;
   truncated: boolean;
   pages?: number;
@@ -243,15 +254,83 @@ export const OFFICIAL_DOCUMENTS: OfficialDocument[] = `;
   return `${header}${JSON.stringify(documents, null, 2)} as const;\n`;
 }
 
-async function main() {
+/**
+ * Fusiona lo descargado en esta ejecución con el corpus anterior.
+ *
+ * Reglas:
+ * - Fuente descargada y checksum igual: se conserva el contenido y
+ *   `lastReviewedAt`; solo avanza `lastCheckedAt`.
+ * - Fuente descargada con contenido nuevo: pasa a `official` con la fecha de hoy.
+ * - Fuente que falla: se conserva la copia anterior como `stale` y se anota el
+ *   error. Nunca se borra evidencia válida por un fallo de red puntual.
+ *
+ * Es una función pura para poder probarla sin red.
+ */
+export function mergeCorpus({ sources, previous = [], fetched = [], errors = [], now = new Date().toISOString() }) {
+  const today = now.slice(0, 10);
+  const previousById = new Map(previous.map((doc) => [doc.id, doc]));
+  const fetchedById = new Map(fetched.map((doc) => [doc.id, doc]));
+  const errorById = new Map(errors.map((entry) => [entry.id, entry.error]));
   const documents = [];
+  const stale = [];
+  const missing = [];
+
+  for (const source of sources) {
+    const fresh = fetchedById.get(source.id);
+    const old = previousById.get(source.id);
+
+    if (fresh) {
+      const unchanged = Boolean(old && old.checksum === fresh.checksum);
+      const lastReviewedAt = unchanged ? (old.lastReviewedAt ?? old.fetchedAt ?? today) : today;
+      documents.push({
+        ...fresh,
+        status: "official",
+        fetchedAt: unchanged ? (old.fetchedAt ?? lastReviewedAt) : today,
+        lastReviewedAt,
+        lastCheckedAt: today,
+      });
+      continue;
+    }
+
+    if (old) {
+      documents.push({
+        ...old,
+        status: "stale",
+        lastReviewedAt: old.lastReviewedAt ?? old.fetchedAt ?? today,
+        lastCheckedAt: old.lastCheckedAt ?? old.fetchedAt ?? today,
+        lastError: errorById.get(source.id) ?? old.lastError ?? "error desconocido",
+      });
+      stale.push(source.id);
+      continue;
+    }
+
+    missing.push(source.id);
+  }
+
+  return { documents, stale, missing, today };
+}
+
+async function readPreviousCorpus() {
+  try {
+    const raw = await readFile(OUT_JSON, "utf8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed?.documents) ? parsed.documents : [];
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    console.warn(`Aviso: no se pudo leer el corpus anterior (${error.message}). Se regenera completo.`);
+    return [];
+  }
+}
+
+async function main() {
+  const fetched = [];
   const errors = [];
 
   for (const source of HTML_SOURCES) {
     process.stdout.write(`· HTML ${source.id} ... `);
     try {
       const doc = await ingestHtml(source);
-      documents.push(doc);
+      fetched.push(doc);
       console.log(`${doc.content.length} chars${doc.truncated ? " (truncado)" : ""}`);
     } catch (error) {
       console.log(`ERROR: ${error.message}`);
@@ -263,7 +342,7 @@ async function main() {
     process.stdout.write(`· PDF  ${source.id} ... `);
     try {
       const doc = await ingestPdf(source);
-      documents.push(doc);
+      fetched.push(doc);
       console.log(`${doc.content.length} chars, ${doc.pages} págs${doc.truncated ? " (truncado)" : ""}`);
     } catch (error) {
       console.log(`ERROR: ${error.message}`);
@@ -271,26 +350,51 @@ async function main() {
     }
   }
 
-  if (documents.length < 5) {
-    throw new Error(`Solo se ingestaron ${documents.length} fuentes; se aborta para no publicar un corpus vacío.`);
+  const previous = await readPreviousCorpus();
+  const sources = [...HTML_SOURCES, ...PDF_SOURCES];
+  const merged = mergeCorpus({ sources, previous, fetched, errors });
+  const { documents, stale, missing } = merged;
+
+  const available = documents.filter((doc) => doc.status === "official").length;
+  if (available < 5) {
+    throw new Error(
+      `Solo hay ${available} fuentes oficiales disponibles; se aborta para no publicar un corpus vacío.`,
+    );
   }
 
   await mkdir(dirname(OUT_TS), { recursive: true });
   await writeFile(OUT_TS, toTs(documents), "utf8");
   await writeFile(
     OUT_JSON,
-    JSON.stringify({ generatedAt: new Date().toISOString(), count: documents.length, errors, documents }, null, 2),
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        count: documents.length,
+        official: available,
+        stale,
+        missing,
+        errors,
+        documents,
+      },
+      null,
+      2,
+    ),
     "utf8",
   );
 
   const total = documents.reduce((sum, d) => sum + d.content.length, 0);
-  console.log(`\n✓ ${documents.length} fuentes oficiales, ${total.toLocaleString("es-ES")} caracteres.`);
+  console.log(`\n✓ ${documents.length} fuentes (${available} vigentes, ${stale.length} obsoletas), ${total.toLocaleString("es-ES")} caracteres.`);
   console.log(`  ${OUT_TS}`);
   if (errors.length) console.log(`  ${errors.length} fuentes fallidas (ver JSON).`);
+  if (stale.length) console.log(`  Conservadas como stale: ${stale.join(", ")}`);
+  if (missing.length) console.log(`  Sin copia previa: ${missing.join(", ")}`);
 }
 
-main().catch((error) => {
-  console.error(`\n✗ Ingesta abortada: ${error.message}`);
-  process.exit(1);
-});
+const entry = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : "";
+if (import.meta.url === entry) {
+  main().catch((error) => {
+    console.error(`\n✗ Ingesta abortada: ${error.message}`);
+    process.exit(1);
+  });
+}
 

@@ -9,8 +9,12 @@ export type OfficialDocument = {
   locale: "es" | "gl" | "en";
   organization: string;
   kind: "html" | "pdf";
-  status: "official";
+  status: "official" | "stale";
   fetchedAt: string;
+  /** Opcional en corpus antiguos; la ingesta incremental ya lo rellena. */
+  lastReviewedAt?: string;
+  lastCheckedAt?: string;
+  lastError?: string;
   checksum: string;
   truncated: boolean;
   pages?: number;

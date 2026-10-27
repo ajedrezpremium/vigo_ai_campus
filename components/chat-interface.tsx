@@ -35,6 +35,30 @@ type Message = {
 };
 type Conversation = { id: string; title: string; messages: Message[]; updatedAt: string };
 
+type StreamEvent =
+  | {
+      type: "meta";
+      agent?: string;
+      citations?: Citation[];
+      needsHuman?: boolean;
+      confidence?: number;
+      suggestedTicket?: Message["suggestedTicket"];
+    }
+  | { type: "delta"; text: string }
+  | { type: "notice"; notice: Notice }
+  | {
+      type: "done";
+      answer?: string;
+      agent?: string;
+      citations?: Citation[];
+      needsHuman?: boolean;
+      suggestedTicket?: Message["suggestedTicket"];
+      notice?: Notice | null;
+      aiGenerated?: boolean;
+      confidence?: number;
+    }
+  | { type: "error"; message?: string };
+
 const COPY = {
   es: {
     banner:
@@ -161,6 +185,7 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState<string | null>(null);
+  const [streamingId, setStreamingId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -215,32 +240,132 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed, conversationId: convId, locale }),
+        body: JSON.stringify({ message: trimmed, conversationId: convId, locale, stream: true }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || copy.error);
 
-      const assistantMsg: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: data.answer,
-        agent: data.agent,
-        citations: data.citations || [],
-        needsHuman: data.needsHuman,
-        suggestedTicket: data.suggestedTicket,
-        notice: data.notice ?? null,
-        aiGenerated: data.aiGenerated,
-        confidence: data.confidence,
-        createdAt: new Date().toISOString(),
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || copy.error);
+      }
+
+      // Respuestas puntuales (aclaración, rate limit ya validado): JSON normal.
+      if (!res.body || !contentType.includes("application/x-ndjson")) {
+        const data = await res.json();
+        const assistantMsg: Message = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: data.answer,
+          agent: data.agent,
+          citations: data.citations || [],
+          needsHuman: data.needsHuman,
+          suggestedTicket: data.suggestedTicket,
+          notice: data.notice ?? null,
+          aiGenerated: data.aiGenerated,
+          confidence: data.confidence,
+          createdAt: new Date().toISOString(),
+        };
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === convId
+              ? { ...c, messages: [...c.messages, assistantMsg], updatedAt: new Date().toISOString() }
+              : c,
+          ),
+        );
+        return;
+      }
+
+      const messageId = crypto.randomUUID();
+      let started = false;
+
+      const ensureMessage = () => {
+        if (started) return;
+        started = true;
+        setStreamingId(messageId);
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === convId
+              ? {
+                  ...c,
+                  messages: [
+                    ...c.messages,
+                    { id: messageId, role: "assistant", content: "", createdAt: new Date().toISOString() },
+                  ],
+                  updatedAt: new Date().toISOString(),
+                }
+              : c,
+          ),
+        );
       };
 
-      setConversations((prev) =>
-        prev.map((c) => (c.id === convId ? { ...c, messages: [...c.messages, assistantMsg], updatedAt: new Date().toISOString() } : c)),
-      );
+      const patchMessage = (update: (message: Message) => Message) => {
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === convId
+              ? {
+                  ...c,
+                  messages: c.messages.map((message) => (message.id === messageId ? update(message) : message)),
+                  updatedAt: new Date().toISOString(),
+                }
+              : c,
+          ),
+        );
+      };
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line) as StreamEvent;
+
+          if (event.type === "meta") {
+            ensureMessage();
+            patchMessage((message) => ({
+              ...message,
+              agent: event.agent,
+              citations: event.citations ?? [],
+              needsHuman: event.needsHuman,
+              suggestedTicket: event.suggestedTicket ?? null,
+              confidence: event.confidence,
+            }));
+          } else if (event.type === "delta") {
+            ensureMessage();
+            patchMessage((message) => ({ ...message, content: message.content + event.text }));
+          } else if (event.type === "notice") {
+            ensureMessage();
+            patchMessage((message) => ({ ...message, notice: event.notice }));
+          } else if (event.type === "done") {
+            ensureMessage();
+            patchMessage((message) => ({
+              ...message,
+              content: event.answer ?? message.content,
+              agent: event.agent ?? message.agent,
+              citations: event.citations ?? message.citations,
+              needsHuman: event.needsHuman ?? message.needsHuman,
+              suggestedTicket: event.suggestedTicket ?? message.suggestedTicket,
+              notice: event.notice ?? message.notice,
+              aiGenerated: event.aiGenerated,
+              confidence: event.confidence ?? message.confidence,
+            }));
+          } else if (event.type === "error") {
+            throw new Error(event.message || copy.error);
+          }
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : copy.error);
     } finally {
       setLoading(false);
+      setStreamingId(null);
     }
   }
 
@@ -376,7 +501,14 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
                         </div>
                       )}
 
-                      <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                      <div className="whitespace-pre-wrap leading-relaxed">
+                        {m.content}
+                        {streamingId === m.id && (
+                          <span aria-hidden="true" className="ml-0.5 inline-block animate-pulse text-cyan-700">
+                            ▍
+                          </span>
+                        )}
+                      </div>
 
                       {m.notice && (
                         <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900">
@@ -440,7 +572,7 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
                   </div>
                 ))}
 
-                {loading && (
+                {loading && !streamingId && (
                   <div className="flex justify-start" aria-live="polite">
                     <div className="rounded-2xl rounded-bl-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
                       <span className="inline-flex items-center gap-2">

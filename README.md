@@ -6,7 +6,7 @@ Superagente académico para la Universidade de Vigo: orientación sobre matrícu
 
 - Producción: <https://vigo-ai-campus.vercel.app/app>
 - Stack: Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, Supabase, OpenRouter.
-- Corpus: 26 fuentes oficiales de `uvigo.gal` (23 HTML + 3 PDF), capturadas y versionadas.
+- Corpus: 26 fuentes oficiales de `uvigo.gal` (24 HTML + 2 PDF), capturadas y versionadas.
 
 ## Arranque rápido
 
@@ -52,11 +52,13 @@ npm run test:a11y # axe sobre 6 páginas + locale (requiere build previo)
 
 ## Cómo funciona el RAG
 
-1. `scripts/ingest-uvigo.mjs` descarga páginas y PDFs públicos de `uvigo.gal`, extrae el contenido principal con `cheerio`/`pdf-parse` y genera `data/uvigo-corpus.ts` con URL, fecha, checksum y texto.
-2. `lib/retrieval.ts` construye un índice de fragmentos, aplica stemming ligero ES/GL, BM25, prioridad de fuentes oficiales y bonus por título/intención.
-3. `POST /api/chat` valida y sanea la entrada, aplica rate limiting, recupera 5 fragmentos, construye un prompt con fuentes delimitadas como datos y llama a OpenRouter.
-4. Si OpenRouter no está disponible o se agota la cuota free, `lib/answer-composer.ts` compone una respuesta profesional **solo con las fuentes recuperadas**, sin inventar datos.
-5. Cada respuesta devuelve citas con `type: official|demo`, URL, organización y fecha de captura.
+1. `scripts/ingest-uvigo.mjs` descarga páginas y PDFs públicos de `uvigo.gal`, extrae el contenido principal con `cheerio`/`pdf-parse` y genera `data/uvigo-corpus.ts` con URL, fechas, checksum y texto.
+2. `lib/retrieval.ts` construye un índice de fragmentos, aplica stemming ligero ES/GL, BM25, prioridad de fuentes oficiales y bonus por título/intención. Las fuentes `stale` ceden ante una copia vigente.
+3. `lib/evidence.ts` decide si hay evidencia suficiente. Si la consulta es de otra universidad, pide datos personales o la cobertura es baja, el chat **se abstiene** en lugar de responder con fragmentos débiles.
+4. `POST /api/chat` valida y sanea la entrada, aplica rate limiting, recupera 5 fragmentos y construye el prompt versionado de `lib/prompts/chat.ts` con fuentes delimitadas como datos.
+5. Si OpenRouter no está disponible o se agota la cuota free, `lib/answer-composer.ts` compone una respuesta profesional **solo con las fuentes recuperadas**, sin inventar datos.
+6. La respuesta se puede pedir como JSON (`stream: false`, por defecto) o como stream NDJSON (`stream: true`) con eventos `meta`, `notice`, `delta`, `done` y `error`.
+7. Cada respuesta devuelve citas con `type: official|demo`, URL, organización, fecha de revisión y `promptVersion`.
 
 ### Actualizar el corpus
 
@@ -64,7 +66,16 @@ npm run test:a11y # axe sobre 6 páginas + locale (requiere build previo)
 npm run ingest:uvigo
 ```
 
-El script aborta si ingiere menos de 5 fuentes para no publicar un corpus vacío. El resultado se versiona: el despliegue es reproducible y no depende de la red en runtime.
+La ingesta es **incremental**: si el checksum de una fuente no cambia se conserva el contenido ya versionado y solo se actualiza `lastCheckedAt`; si una fuente falla, la última copia válida se mantiene marcada como `stale` en lugar de desaparecer. El script aborta si quedan menos de 5 fuentes oficiales disponibles. El resultado se versiona: el despliegue es reproducible y no depende de la red en runtime.
+
+### Evaluación de la IA
+
+```bash
+npm run eval          # compositor determinista, sin red ni cuota; apto para CI
+npm run eval:llm      # modelo real; requiere LLM_API_KEY en .env.local y cuota
+```
+
+El set de `lib/evaluation/dataset.ts` tiene 30 preguntas (22 respondibles y 8 de abstención). Se miden *recall* de recuperación, cobertura de respuesta, abstención correcta, validez de citas y *faithfulness* operativa (fechas, URLs y `[Fuente N]` verificables dentro del contexto). Los informes se guardan en `eval/results/` con la versión de prompt y el modelo usados. `npm test` ejecuta la evaluación determinista como prueba de regresión.
 
 ## OpenRouter: cuota gratuita
 

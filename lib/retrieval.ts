@@ -28,7 +28,7 @@ type CorpusDocument = {
   content: string;
   locale: "es" | "gl" | "en";
   organization: string;
-  status: string;
+  status: "official" | "stale" | "demo" | "approved";
   reviewedAt: string;
   kind: "html" | "pdf" | "demo";
   truncated: boolean;
@@ -54,7 +54,7 @@ const CORPUS: CorpusDocument[] = [
     locale: doc.locale,
     organization: doc.organization,
     status: doc.status,
-    reviewedAt: doc.fetchedAt,
+    reviewedAt: doc.lastReviewedAt ?? doc.fetchedAt,
     kind: doc.kind,
     truncated: doc.truncated,
   })),
@@ -99,8 +99,21 @@ const STOPWORDS = new Set([
   "hay",
   "puedo",
   "puede",
+  "puedes",
   "quiero",
   "necesito",
+  "tiene",
+  "tienen",
+  "hacer",
+  "pido",
+  "pedir",
+  "ofrece",
+  "ofrecer",
+  "presenta",
+  "presentar",
+  "consulto",
+  "consultar",
+  "saber",
   "the",
   "and",
   "for",
@@ -144,6 +157,8 @@ function stem(token: string): string {
   if (t.startsWith("secretar")) return "secretaria";
   if (t.startsWith("solicit")) return "solicitud";
   if (t.startsWith("tramit")) return "tramite";
+  if (t.startsWith("asesor")) return "asesor";
+  if (t.startsWith("naci") || t.startsWith("nace")) return "naci";
   if (t.endsWith("es") && t.length > 4) return t.slice(0, -2);
   if (t.endsWith("s") && t.length > 3) return t.slice(0, -1);
   return t;
@@ -289,10 +304,13 @@ export function retrieve(query: string, options: RetrieveOptions = {}): Retrieve
 
     const authority = chunk.kind === "demo" ? 0.58 : 1.58;
     score *= authority;
+    // Una fuente obsoleta sigue siendo evidencia válida, pero cede ante una
+    // copia vigente del mismo tema.
+    if (chunk.status === "stale") score *= 0.82;
 
     // Términos de acción: si el título del documento contiene el término
     // principal de la consulta, ese documento debe liderar el ranking.
-    const actionTerms = ["matricula", "beca", "calendario", "movilidad", "biblioteca", "solicitud", "tramite"];
+    const actionTerms = ["matricula", "beca", "calendario", "movilidad", "biblioteca", "solicitud", "tramite", "centro", "asesor"];
     const actionMatch = actionTerms.some((term) => queryTokens.includes(term) && titleTerms.has(term));
     if (actionMatch) score *= 1.9;
     if (options.locale && chunk.locale === options.locale) score *= 1.08;
@@ -350,6 +368,7 @@ export function getCorpusStats() {
   return {
     documents: CORPUS.length,
     officialDocuments: official.length,
+    staleDocuments: official.filter((d) => d.status === "stale").length,
     demoDocuments: CORPUS.length - official.length,
     chunks: INDEX.length,
     characters: CORPUS.reduce((sum, d) => sum + d.content.length, 0),

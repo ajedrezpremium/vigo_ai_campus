@@ -1,0 +1,87 @@
+{
+  "summary": {
+    "promptVersion": "2026-10-27.1",
+    "generatedAt": "2026-10-27T04:43:17.651Z",
+    "mode": "llm",
+    "partial": true,
+    "questions": 2,
+    "answerable": 2,
+    "unanswerable": 0,
+    "retrievalRecall": 1,
+    "answerCoverage": 1,
+    "abstentionAccuracy": 1,
+    "citationValidity": 1,
+    "expectedCitationRate": 1,
+    "faithfulness": 1,
+    "lexicalGrounding": 0.238,
+    "thresholds": {
+      "retrievalRecall": 0.85,
+      "answerCoverage": 0.85,
+      "abstentionAccuracy": 0.9,
+      "citationValidity": 0.95,
+      "expectedCitationRate": 0.8,
+      "faithfulness": 0.9
+    },
+    "passed": true
+  },
+  "items": [
+    {
+      "id": "matricula-grado",
+      "question": "¿Cómo me matriculo en un grado de la UVigo?",
+      "expectation": "answer",
+      "tags": [
+        "matricula"
+      ],
+      "retrieved": [
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-matricula",
+        "uvigo-matricula-master"
+      ],
+      "confidence": 1,
+      "score": 48.68,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 0.143,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "latencyMs": 8026,
+      "answerChars": 1307,
+      "answerPreview": "## Resumen\nPara matricularte en un grado de la UVigo, el procedimiento varía según tu situación:  \n- **Estudiantes de nuevo ingreso** (iniciación de estudios): debes acceder al enlace específico si realizaste la preinscripción en Nerta según el calendario de la CiUG o tienes admisión por reconocimiento de créditos, curso puente o plaza vacante [Fuente 2].  \n- **Estudiantes de continuación**: si ya tienes acceso al portal académico, la matrícula ordinaria se realiza del **20 de agosto al 11 de se"
+    },
+    {
+      "id": "matricula-master",
+      "question": "¿Cuál es el procedimiento de matrícula de un máster?",
+      "expectation": "answer",
+      "tags": [
+        "matricula"
+      ],
+      "retrieved": [
+        "uvigo-matricula-master",
+        "uvigo-matricula-master",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado",
+        "uvigo-matricula-grado"
+      ],
+      "confidence": 1,
+      "score": 47.96,
+      "coverage": 1,
+      "abstained": false,
+      "retrievalHit": true,
+      "abstentionCorrect": null,
+      "citationsValid": true,
+      "expectedCited": true,
+      "faithfulness": 1,
+      "lexicalGrounding": 0.333,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "latencyMs": 10959,
+      "answerChars": 1435,
+      "answerPreview": "## Resumen\nEl procedimiento de matrícula en un máster de la Universidade de Vigo se articula en dos fases principales: una **preinscripción telemática** dentro de los plazos publicados en el calendario oficial y, si quedan plazas vacantes, la apertura de un **nuevo plazo** [Fuente 2]. La convocatoria de matrícula detalla los trámites específicos, documentación y fechas exactas [Fuente 2]. Para gestiones como anulación total de matrícula (con derecho a devolución hasta el 21 de octubre de 2026 a "
+    }
+  ]
+}

@@ -41,6 +41,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# evaluación generada en CI
+/eval/results/ci.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
