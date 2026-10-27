@@ -31,6 +31,8 @@ type Message = {
   notice?: Notice | null;
   aiGenerated?: boolean;
   confidence?: number;
+  requestId?: string;
+  messageId?: string;
   createdAt: string;
 };
 type Conversation = { id: string; title: string; messages: Message[]; updatedAt: string };
@@ -43,6 +45,7 @@ type StreamEvent =
       needsHuman?: boolean;
       confidence?: number;
       suggestedTicket?: Message["suggestedTicket"];
+      requestId?: string;
     }
   | { type: "delta"; text: string }
   | { type: "notice"; notice: Notice }
@@ -56,6 +59,8 @@ type StreamEvent =
       notice?: Notice | null;
       aiGenerated?: boolean;
       confidence?: number;
+      requestId?: string;
+      messageId?: string;
     }
   | { type: "error"; message?: string };
 
@@ -263,6 +268,8 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
           notice: data.notice ?? null,
           aiGenerated: data.aiGenerated,
           confidence: data.confidence,
+          requestId: data.requestId,
+          messageId: data.messageId,
           createdAt: new Date().toISOString(),
         };
         setConversations((prev) =>
@@ -336,6 +343,7 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
               needsHuman: event.needsHuman,
               suggestedTicket: event.suggestedTicket ?? null,
               confidence: event.confidence,
+              requestId: event.requestId,
             }));
           } else if (event.type === "delta") {
             ensureMessage();
@@ -355,6 +363,8 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
               notice: event.notice ?? message.notice,
               aiGenerated: event.aiGenerated,
               confidence: event.confidence ?? message.confidence,
+              requestId: event.requestId ?? message.requestId,
+              messageId: event.messageId ?? message.messageId,
             }));
           } else if (event.type === "error") {
             throw new Error(event.message || copy.error);
@@ -401,7 +411,13 @@ export function ChatInterface({ showDemoBanner = true }: { showDemoBanner?: bool
     await fetch("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messageId: msg.id, rating }),
+      body: JSON.stringify({
+        requestId: msg.requestId ?? msg.id,
+        messageId: msg.messageId,
+        conversationId: activeId,
+        agent: msg.agent,
+        rating,
+      }),
     }).catch(() => {});
   }
 

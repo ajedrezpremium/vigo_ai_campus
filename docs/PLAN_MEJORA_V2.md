@@ -13,7 +13,7 @@ Actualizado: 2026-10-27.
 | **Fase 0** — desbloquear CI y regresiones | ✅ Completada | `next.config.ts` sin loader inexistente; `language-switcher` tipado; rutas de historial/solicitudes enlazadas; `proxy.ts` sustituye a `middleware.ts`; 500 sin detalle interno; 0 warnings de lint; `tsc` limpio; `build` verde. |
 | **Fase 1** — seguridad y multi-tenant | ✅ Completada | Modo demo *fail-closed* (`lib/tenant.ts`), filtro `organization_id` en métricas/auditoría, `organization_id` en `recordMetric`, bootstrap de admin solo con `ADMIN_EMAILS`, rate limit con Upstash opcional, 7 tests nuevos (18 en total). |
 | **Fase 2** — producto y calidad | ✅ Completada | Feedback 👍/👎 ya existía en el chat; añadidos `error.tsx`, `not-found.tsx` y `loading.tsx`. i18n completo ES/GL/EN con cookie y renderizado en servidor (#14). Auditoría axe en 6 páginas + locale (#15): 7/7 en verde. Observabilidad con `requestId`, logs JSON, persistencia en `audit_events` y Sentry opcional (#16): 12 tests nuevos (30 en total) y smoke test E2E verificado. |
-| **Fase 3** — IA y datos | 🟡 Parcial | Prompts versionados (`lib/prompts/chat.ts`, `2026-10-27.1`), arnés de evaluación con 30 preguntas y umbrales (`lib/evaluation`, `npm run eval`), *gate* de evidencia/abstención (`lib/evidence.ts`), streaming NDJSON real con *fallback* extractivo e ingesta incremental con `checksum`/`stale`. Pendientes: pgvector en Supabase (#17) y cierre del bucle de feedback. |
+| **Fase 3** — IA y datos | 🟡 Parcial | Prompts versionados (`lib/prompts/chat.ts`, `2026-10-27.1`), arnés de evaluación con 30 preguntas y umbrales (`lib/evaluation`, `npm run eval`), *gate* de evidencia/abstención (`lib/evidence.ts`), streaming NDJSON real con *fallback* extractivo, ingesta incremental con `checksum`/`stale` y bucle de feedback (`/api/feedback` → `chat.feedback` → panel de conocimiento). Pendiente: pgvector en Supabase (#17). |
 
 Decisión de rutas: se mantuvieron `/historial` y `/solicitudes` en la raíz (trabajo ya iniciado) y se actualizaron el dashboard y el proxy, en lugar de devolverlas a `/app`. `/solicitudes` exige sesión; `/historial` es local al navegador.
 
@@ -163,9 +163,9 @@ Objetivo: que el modo demo no sea una puerta trasera y que cada organización ve
 - [x] **Evaluación**: 30 preguntas (22 respondibles, 8 de abstención) con documento esperado; mide *recall*, cobertura, abstención, citas y *faithfulness* operativa (fechas/URLs/citas dentro del contexto). Resultados por versión de prompt en `eval/results/`.
 - [x] Streaming de respuesta (`ReadableStream`, NDJSON `meta`/`notice`/`delta`/`done`/`error`) manteniendo el compositor como *fallback* y la respuesta JSON para clientes antiguos.
 - [x] Versionado de prompts en `lib/prompts/` y pruebas de regresión de formato.
-- [ ] Cerrar el bucle de feedback: valoraciones → revisión de conocimiento → alerta de fuentes obsoletas.
+- [x] Cerrar el bucle de feedback: 👍/👎 → `audit_events` (`chat.feedback`) → panel de conocimiento con valoraciones negativas, comentarios y alerta de fuentes `stale` o capturas de más de 90 días.
 
-**Criterio de aceptación:** *faithfulness* ≥ 0,9 en el set de evaluación; ninguna respuesta con URL fuera de `uvigo.gal`; p95 < 4 s en streaming. **Estado:** 1,000 con compositor y en la muestra real; 0 URLs externas; el streaming se verificó funcionalmente (pendiente medir p95 con carga).
+**Criterio de aceptación:** *faithfulness* ≥ 0,9 en el set de evaluación; ninguna respuesta con URL fuera de `uvigo.gal`; p95 < 4 s en streaming. **Estado:** 1,000 con compositor y en la muestra real; 0 URLs externas; p95 del compositor inferior a 10 ms y umbral incorporado al informe (`latencyP95Ms`); pendiente una prueba de carga real del streaming para confirmar el p95 de extremo a extremo.
 
 ### Fase 4 — Opcional / negocio (solo si el TFG lo pide)
 
@@ -226,8 +226,8 @@ Una tarea se considera terminada cuando:
 ## 7. Próximos tres pasos
 
 1. **Hecho:** Fases 0, 1 y 2 completas (build, tipos, rutas, proxy, i18n, axe y observabilidad).
-2. **Hecho:** Fase 3 parcial — prompts versionados, evaluación (B21), streaming (B22) e ingesta incremental (parte de B20). Pendientes: pgvector (#17), bucle de feedback y medición de p95.
-3. **Siguiente:** si hay Supabase disponible, crear la migración `vector` e ingesta a `knowledge_documents`; después, cerrar el bucle de feedback y repetir la evaluación real (`npm run eval:llm`).
+2. **Hecho:** Fase 3 parcial — prompts versionados, evaluación (B21), streaming (B22), ingesta incremental (parte de B20) y bucle de feedback con alertas de fuentes obsoletas. Pendiente: pgvector (#17).
+3. **Siguiente:** si hay Supabase disponible, crear la migración `vector` e ingesta a `knowledge_documents`; después, repetir la evaluación real (`npm run eval:llm`) y una prueba de carga del streaming para fijar el p95.
 
 ### Anexo — Verificación rápida
 
@@ -241,4 +241,4 @@ npm run build
 npm run test:a11y     # requiere build previo y chromium
 ```
 
-Estado actual: `lint` 0 errores / 0 warnings · `tsc` limpio · `test` 44/44 · `build` verde · `test:a11y` 7/7 · `eval` 30/30 con todas las métricas a 1,000.
+Estado actual: `lint` 0 errores / 0 warnings · `tsc` limpio · `test` 48/48 · `build` verde · `test:a11y` 7/7 · `eval` 30/30 con todas las métricas a 1,000 y p95 del compositor inferior a 10 ms.

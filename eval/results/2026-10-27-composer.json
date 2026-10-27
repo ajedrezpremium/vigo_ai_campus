@@ -1,7 +1,7 @@
 {
   "summary": {
     "promptVersion": "2026-10-27.1",
-    "generatedAt": "2026-10-27T04:49:11.405Z",
+    "generatedAt": "2026-10-27T04:59:08.957Z",
     "mode": "composer",
     "partial": false,
     "questions": 30,
@@ -14,13 +14,17 @@
     "expectedCitationRate": 1,
     "faithfulness": 1,
     "lexicalGrounding": 1,
+    "latencyP50Ms": 1,
+    "latencyP95Ms": 2,
+    "latencyMaxMs": 6,
     "thresholds": {
       "retrievalRecall": 0.85,
       "answerCoverage": 0.85,
       "abstentionAccuracy": 0.9,
       "citationValidity": 0.95,
       "expectedCitationRate": 0.8,
-      "faithfulness": 0.9
+      "faithfulness": 0.9,
+      "latencyP95Ms": 4000
     },
     "passed": true
   },
@@ -50,7 +54,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 4,
+      "latencyMs": 6,
       "answerChars": 1846,
       "answerPreview": "## Resumen\n\nAccede a este enlace si vas a iniciar estudios de grado y realizaste la preinscripción en el Nerta de acuerdo con el calendario de llamamientos de la CiUG o si tienes una admisión para iniciar estudios por reconocimiento de créditos, curso puente o bien por obtener una plaza vacante. Si continúas estudios en la Universidade de Vigo y ya tienes acceso al portal académico utiliza del siguiente enlace del 20 de agosto al 11 de septiembre de 2026:\n\n## Puntos clave\n\n- 1.º plazo de modific"
     },
@@ -166,7 +170,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 2,
+      "latencyMs": 1,
       "answerChars": 1056,
       "answerPreview": "## Resumen\n\nCalendario del curso académico 2026/2027 Calendario académico del curso 2026/2027\n\n## Puntos clave\n\n- Calendario académico del curso 2026/2027 del Centro Universitario de la Defensa\n- Calendario del curso académico 2025/2026\n- Calendario académico do curso 2025/2026 modificado\n- Calendario académico del curso 2025/2026\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar plazos y requisitos.\n- Ten a mano tu expediente o identificador del trámite antes de contactar.\n"
     },
@@ -195,7 +199,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 3,
+      "latencyMs": 2,
       "answerChars": 1604,
       "answerPreview": "## Resumen\n\nCALENDARIO ACADÉMICO DO CURSO 2026-2027 (aprobado no Consello de Goberno do 25 de marzo do 2026) O curso académico comprenderá do 1 de setembro de 2026 ao 31 de agosto de\n\n## Puntos clave\n\n- O calendario de actividades académicas é o marco temporal no que se desenvolve a planificación do conxunto das diversas actividades formativas, incluíndo as correspondentes probas de avaliación, nas titulacións que se imparten na Universidade.\n- Seguindo o disposto polo RD 1125/2003, cada crédito"
     },
@@ -224,7 +228,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 2,
+      "latencyMs": 1,
       "answerChars": 1275,
       "answerPreview": "## Resumen\n\nPodrás acceder a la universidad si dispones de alguna titulación o si realizaste una prueba de acceso. En esta sección encontrarás toda la información de acceso a los grados, másteres, doctorados o al Programa de mayores, sea cual sea tu perfil.\n\n## Puntos clave\n\n- Las titulaciones de grado, máster y el Programa universitario de mayores ofertan un número limitado de plazas para el alumnado de primer curso.\n- Por eso antes de hacer la matrícula, debes realizar una solicitud de admisió"
     },
@@ -253,7 +257,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 2,
+      "latencyMs": 1,
       "answerChars": 1847,
       "answerPreview": "## Resumen\n\nAccede a este enlace si vas a iniciar estudios de grado y realizaste la preinscripción en el Nerta de acuerdo con el calendario de llamamientos de la CiUG o si tienes una admisión para iniciar estudios por reconocimiento de créditos, curso puente o bien por obtener una plaza vacante. Si continúas estudios en la Universidade de Vigo y ya tienes acceso al portal académico utiliza del siguiente enlace del 20 de agosto al 11 de septiembre de 2026:\n\n## Puntos clave\n\n- 1.º plazo de modific"
     },
@@ -282,7 +286,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 2,
+      "latencyMs": 1,
       "answerChars": 2000,
       "answerPreview": "## Resumen\n\nNacimos en 1990 y, desde entonces, hemos mantenido un constante crecimiento y consolidación. Somos una universidad de vanguardia, con la excelencia como objetivo y que está creciendo como una referencia internacional en la innovación y en la investigación.\n\n## Puntos clave\n\n- La Universidade de Vigo es una universidad pública, con autonomía académica, económica y de gobierno, que se sitúa al servicio de la sociedad bajo los principios de la igualdad, la solidaridad, la democracia y l"
     },
@@ -340,7 +344,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 2,
+      "latencyMs": 1,
       "answerChars": 1878,
       "answerPreview": "## Resumen\n\nLos estudiantes de la Universidade de Vigo podrán participar en las diversas convocatorias de movilidad que la Oficina de Relaciones Internacionales (ORI) publica a lo largo del curso. Las convocatorias suelen publicarse el año anterior al curso académico que se disfrutará de intercambio.\n\n## Puntos clave\n\n- Es muy importante seguir todas las novedades de la ORI a través de sus comunicados.\n- El programa con mayor número de participantes es el programa Erasmus+, pero la Universidade "
     },
@@ -369,7 +373,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 2,
+      "latencyMs": 1,
       "answerChars": 1567,
       "answerPreview": "## Resumen\n\nEs un área transversal a toda la institución y nuestros servicios son utilizados a diario por toda la comunidad universitaria. Detrás de dichos servicios hay un equipo humano implicado y motivado en la búsqueda de una mejora constante.\n\n## Puntos clave\n\n- El ATIC ofrece una plataforma completamente orientada a guiar y explicar cómo acceder y utilizar las infraestructuras y los recursos informáticos que pone a disposición de toda la comunidad universitaria.\n- Tenemos un servicio de ge"
     },
@@ -398,7 +402,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 1,
+      "latencyMs": 2,
       "answerChars": 930,
       "answerPreview": "## Resumen\n\nCentro Universitario da Defensa da Escola Naval Militar de Marín Escola Superior de Enxeñaría Informática\n\n## Puntos clave\n\n- Escola Universitaria de Profesorado de E.X.B.\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar plazos y requisitos.\n- Ten a mano tu expediente o identificador del trámite antes de contactar.\n- No presentes solicitudes oficiales desde esta demo: solo ofrece orientación.\n\n## Fuentes consultadas\n\n1. [Centros de la Universidade de Vigo](https"
     },
@@ -427,7 +431,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 2,
+      "latencyMs": 1,
       "answerChars": 1127,
       "answerPreview": "## Resumen\n\nAlojamiento, restaurantes, deportes, cultura, servicios médicos… Todo lo que necesites, lo encontrarás en los campus de la UVigo\n\n## Puntos clave\n\n- Los campus de la Universidade de Vigo constituyen un entorno óptimo para desarrollar todos los elementos de la vida universitaria y ofrecen una amplia variedad de servicios para la comunidad universitaria como pueden ser las bibliotecas, las instalaciones deportivas, los comedores etc.\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlaz"
     },
@@ -485,7 +489,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 2,
+      "latencyMs": 1,
       "answerChars": 1107,
       "answerPreview": "## Resumen\n\nCon el fin de organizar y mantener actualizada la legislación que afecta a la actividad de la universidad, se pone a disposición de las personas usuarias un repositorio de normativa. En este repositorio puedes consultar la normativa según diferentes parámetros, por ejemplo:\n\n## Puntos clave\n\n- O realizar búsquedas con palabra clave, como «transparencia», «becas»…\n\n## Pasos siguientes\n\n- Abre la fuente oficial enlazada para confirmar plazos y requisitos.\n- Ten a mano tu expediente o i"
     },
@@ -569,7 +573,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 0,
+      "latencyMs": 1,
       "answerChars": 1569,
       "answerPreview": "## Resumen\n\nLa Universidade de Vigo tiene herramientas para ayudarte en cada una de las etapas de estudiante, a futuros y a los actuales alumnos y alumnas. Presiona en estos enlaces en caso de que quieras acceder a la universidad o si ya eres miembro de nuestra comunidad.\n\n## Puntos clave\n\n- El SIE es la sección de información al estudiante y nuestro objetivo es ofrecerles a todo el alumnado así como a futuros universitarios una información clara y completa sobre todo lo concerniente a la vida u"
     },
@@ -656,7 +660,7 @@
       "faithfulness": 1,
       "lexicalGrounding": 1,
       "model": "grounded-extractive-v1",
-      "latencyMs": 2,
+      "latencyMs": 1,
       "answerChars": 1604,
       "answerPreview": "## Resumen\n\nCALENDARIO ACADÉMICO DO CURSO 2026-2027 (aprobado no Consello de Goberno do 25 de marzo do 2026) O curso académico comprenderá do 1 de setembro de 2026 ao 31 de agosto de\n\n## Puntos clave\n\n- O calendario de actividades académicas é o marco temporal no que se desenvolve a planificación do conxunto das diversas actividades formativas, incluíndo as correspondentes probas de avaliación, nas titulacións que se imparten na Universidade.\n- Seguindo o disposto polo RD 1125/2003, cada crédito"
     },

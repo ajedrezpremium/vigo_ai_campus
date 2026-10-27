@@ -58,5 +58,6 @@ test("la evaluación offline cumple los umbrales de la fase 3", async () => {
   assert.ok(report.summary.abstentionAccuracy >= 0.9, `abstención ${report.summary.abstentionAccuracy}`);
   assert.equal(report.summary.citationValidity, 1);
   assert.ok(report.summary.faithfulness >= 0.9, `faithfulness ${report.summary.faithfulness}`);
+  assert.ok(report.summary.latencyP95Ms <= report.summary.thresholds.latencyP95Ms);
   assert.equal(report.summary.passed, true);
 });

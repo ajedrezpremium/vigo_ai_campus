@@ -83,7 +83,7 @@ Sin `stream: true` se mantiene la respuesta JSON original, de modo que clientes 
 - **Modo demo**: el visitante es `estudiante`. Solo `DEMO_ADMIN=true` (local) abre `/admin`.
 - **Webhooks**: HMAC SHA-256 con `timingSafeEqual`.
 - **Secretos**: `SUPABASE_SERVICE_ROLE_KEY` y `LLM_API_KEY` solo en servidor; nunca en `NEXT_PUBLIC_*`.
-- **Tests**: `tests/security.test.ts` cubre inyección, URLs, HMAC, rate limit, roles, RAG y compositor; `tests/observability.test.ts` cubre request ids, buffer, aislamiento por organización y DSN; `tests/prompts.test.ts` protege el formato del prompt y `tests/evaluation.test.ts` fija los umbrales de calidad. Total: 44.
+- **Tests**: `tests/security.test.ts` cubre inyección, URLs, HMAC, rate limit, roles, RAG y compositor; `tests/observability.test.ts` cubre request ids, buffer, aislamiento por organización y DSN; `tests/prompts.test.ts` protege el formato del prompt, `tests/evaluation.test.ts` fija los umbrales de calidad, `tests/ingestion.test.ts` prueba la fusión incremental y `tests/feedback.test.ts` la agregación de valoraciones. Total: 48.
 
 ## 4. Operación
 
@@ -112,7 +112,16 @@ npm run eval          # compositor determinista; sin red ni cuota
 npm run eval:llm      # modelo real; requiere .env.local
 ```
 
-El set vive en `lib/evaluation/dataset.ts` (30 preguntas: 22 respondibles y 8 de abstención). `lib/evaluation/run.ts` calcula *recall*, cobertura, abstención, citas y *faithfulness* operativa. Los informes se escriben en `eval/results/` e incluyen `promptVersion`, modelo y latencia por pregunta. El compositor determinista es el que se ejecuta en CI.
+El set vive en `lib/evaluation/dataset.ts` (30 preguntas: 22 respondibles y 8 de abstención). `lib/evaluation/run.ts` calcula *recall*, cobertura, abstención, citas, *faithfulness* operativa y latencia p50/p95/max. El p95 se compara con el umbral de 4 s. Los informes se escriben en `eval/results/` e incluyen `promptVersion`, modelo y latencia por pregunta. El compositor determinista es el que se ejecuta en CI.
+
+### Feedback y conocimiento
+
+`POST /api/feedback` acepta `{ requestId, messageId?, conversationId?, agent?, rating, comment? }`.
+
+- `recordFeedback()` guarda la valoración en memoria y, con service role, en `audit_events` con `action = "chat.feedback"` y `target_id = requestId`.
+- Si hay sesión y el chat se persistió, también se inserta en la tabla `feedback` usando el `message_id` real que devuelve `/api/chat`.
+- `getFeedbackSummary()` agrega total, porcentaje positivo, negativas por agente y las últimas respuestas a revisar. El panel `/admin/knowledge` y `GET /api/knowledge` lo consumen.
+- El mismo panel avisa de fuentes `stale` y de capturas con más de 90 días, lo que cierra el ciclo valoración → revisión → refresco de fuentes.
 
 ### Métricas
 

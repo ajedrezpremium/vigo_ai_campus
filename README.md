@@ -75,7 +75,11 @@ npm run eval          # compositor determinista, sin red ni cuota; apto para CI
 npm run eval:llm      # modelo real; requiere LLM_API_KEY en .env.local y cuota
 ```
 
-El set de `lib/evaluation/dataset.ts` tiene 30 preguntas (22 respondibles y 8 de abstención). Se miden *recall* de recuperación, cobertura de respuesta, abstención correcta, validez de citas y *faithfulness* operativa (fechas, URLs y `[Fuente N]` verificables dentro del contexto). Los informes se guardan en `eval/results/` con la versión de prompt y el modelo usados. `npm test` ejecuta la evaluación determinista como prueba de regresión.
+El set de `lib/evaluation/dataset.ts` tiene 30 preguntas (22 respondibles y 8 de abstención). Se miden *recall* de recuperación, cobertura de respuesta, abstención correcta, validez de citas, *faithfulness* operativa (fechas, URLs y `[Fuente N]` verificables dentro del contexto) y latencia p50/p95. Los informes se guardan en `eval/results/` con la versión de prompt y el modelo usados. `npm test` ejecuta la evaluación determinista como prueba de regresión.
+
+### Feedback y fuentes obsoletas
+
+Las valoraciones 👍/👎 del chat se envían a `POST /api/feedback` con el `requestId` de la respuesta. Se guardan en `audit_events` (`chat.feedback`) cuando Supabase está configurado y, si hay sesión y el mensaje se persistió, también en la tabla `feedback`. El panel `/admin/knowledge` muestra la tasa de valoraciones positivas, las respuestas negativas con su `requestId` y una alerta cuando hay fuentes `stale` o la última captura supera los 90 días.
 
 ## OpenRouter: cuota gratuita
 

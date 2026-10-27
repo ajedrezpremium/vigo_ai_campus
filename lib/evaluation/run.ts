@@ -15,6 +15,7 @@ const THRESHOLDS = {
   citationValidity: 0.95,
   expectedCitationRate: 0.8,
   faithfulness: 0.9,
+  latencyP95Ms: 4000,
 } as const;
 
 export type EvalItem = {
@@ -55,6 +56,9 @@ export type EvalSummary = {
   expectedCitationRate: number;
   faithfulness: number;
   lexicalGrounding: number;
+  latencyP50Ms: number;
+  latencyP95Ms: number;
+  latencyMaxMs: number;
   thresholds: typeof THRESHOLDS;
   passed: boolean;
 };
@@ -276,6 +280,13 @@ export async function runEvaluation(options: { useLLM?: boolean; limit?: number;
   const withExpectedCitation = answered.filter((item) => item.expectedCited);
   const grounded = answered.filter((item) => item.faithfulness !== null);
 
+  const latencies = items.map((item) => item.latencyMs).sort((a, b) => a - b);
+  const percentile = (p: number) => {
+    if (!latencies.length) return 0;
+    const index = Math.min(latencies.length - 1, Math.max(0, Math.ceil((p / 100) * latencies.length) - 1));
+    return Math.round(latencies[index]);
+  };
+
   const ratio = (value: number, total: number) => (total ? Math.round((value / total) * 1000) / 1000 : 1);
   const summary: EvalSummary = {
     promptVersion: CHAT_PROMPT_VERSION,
@@ -301,6 +312,9 @@ export async function runEvaluation(options: { useLLM?: boolean; limit?: number;
       grounded.reduce((sum, item) => sum + (item.lexicalGrounding ?? 0), 0),
       grounded.length,
     ),
+    latencyP50Ms: percentile(50),
+    latencyP95Ms: percentile(95),
+    latencyMaxMs: latencies.length ? latencies[latencies.length - 1] : 0,
     thresholds: THRESHOLDS,
     passed: false,
   };
@@ -311,7 +325,8 @@ export async function runEvaluation(options: { useLLM?: boolean; limit?: number;
     summary.abstentionAccuracy >= THRESHOLDS.abstentionAccuracy &&
     summary.citationValidity >= THRESHOLDS.citationValidity &&
     summary.expectedCitationRate >= THRESHOLDS.expectedCitationRate &&
-    summary.faithfulness >= THRESHOLDS.faithfulness;
+    summary.faithfulness >= THRESHOLDS.faithfulness &&
+    summary.latencyP95Ms <= THRESHOLDS.latencyP95Ms;
 
   return { summary, items };
 }

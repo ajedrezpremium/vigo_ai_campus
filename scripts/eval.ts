@@ -25,6 +25,9 @@ async function main() {
   console.log(`Cita esperada         ${summary.expectedCitationRate.toFixed(3)}  (min ${summary.thresholds.expectedCitationRate})`);
   console.log(`Faithfulness          ${summary.faithfulness.toFixed(3)}  (min ${summary.thresholds.faithfulness})`);
   console.log(`Solapamiento léxico   ${summary.lexicalGrounding.toFixed(3)}  (diagnóstico)`);
+  console.log(
+    `Latencia p50/p95/max  ${summary.latencyP50Ms} / ${summary.latencyP95Ms} / ${summary.latencyMaxMs} ms  (p95 máx ${summary.thresholds.latencyP95Ms})`,
+  );
   console.log(`\nResultado: ${summary.partial ? "PASA (muestra parcial)" : summary.passed ? "PASA" : "FALLA"}`);
 
   const problems = items.filter(

@@ -67,6 +67,7 @@ function buildPayload(input: {
   conversationId?: string;
   persisted: boolean;
   noEvidence: boolean;
+  messageId?: string;
 }) {
   const { prepared } = input;
   const officialChunks = prepared.effectiveChunks.filter((c) => c.sourceType === "official");
@@ -87,6 +88,7 @@ function buildPayload(input: {
       demo: prepared.effectiveChunks.length - officialChunks.length,
     },
     conversationId: input.conversationId,
+    messageId: input.messageId,
     persisted: input.persisted,
     organization: prepared.viewer?.organizationName ?? null,
     requestId: prepared.requestId,
@@ -110,14 +112,15 @@ async function persistExchange(input: {
 }) {
   let conversationId = input.conversationId;
   let persisted = false;
+  let assistantMessageId: string | undefined;
 
   try {
     const supabase = await getSupabaseServerClient();
-    if (!supabase) return { conversationId, persisted };
+    if (!supabase) return { conversationId, persisted, assistantMessageId };
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData?.user;
-    if (!user) return { conversationId, persisted };
+    if (!user) return { conversationId, persisted, assistantMessageId };
 
     const { data: membership } = await supabase
       .from("memberships")
@@ -126,7 +129,7 @@ async function persistExchange(input: {
       .limit(1)
       .maybeSingle();
     const orgId = membership?.organization_id;
-    if (!orgId) return { conversationId, persisted };
+    if (!orgId) return { conversationId, persisted, assistantMessageId };
 
     if (!conversationId) conversationId = crypto.randomUUID();
     await supabase.from("conversations").upsert({
@@ -137,29 +140,33 @@ async function persistExchange(input: {
       locale: input.locale,
       mode: "authenticated",
     });
-    await supabase.from("messages").insert([
-      {
-        organization_id: orgId,
-        conversation_id: conversationId,
-        role: "user",
-        content: input.message,
-        agent_slug: null,
-      },
-      {
-        organization_id: orgId,
-        conversation_id: conversationId,
-        role: "assistant",
-        content: input.content,
-        citations: input.citations,
-        agent_slug: input.agent,
-      },
-    ]);
+    const { data: inserted } = await supabase
+      .from("messages")
+      .insert([
+        {
+          organization_id: orgId,
+          conversation_id: conversationId,
+          role: "user",
+          content: input.message,
+          agent_slug: null,
+        },
+        {
+          organization_id: orgId,
+          conversation_id: conversationId,
+          role: "assistant",
+          content: input.content,
+          citations: input.citations,
+          agent_slug: input.agent,
+        },
+      ])
+      .select("id, role");
+    assistantMessageId = inserted?.find((row) => row.role === "assistant")?.id;
     persisted = true;
   } catch {
     // La persistencia es best-effort en la demo; nunca bloquea la respuesta.
   }
 
-  return { conversationId, persisted };
+  return { conversationId, persisted, assistantMessageId };
 }
 
 function recordChatMetric(input: {
@@ -315,6 +322,7 @@ function streamChat(prepared: PreparedChat) {
             notice,
             needsHuman,
             conversationId: persisted.conversationId,
+            messageId: persisted.assistantMessageId,
             persisted: persisted.persisted,
             noEvidence,
           }),
@@ -533,6 +541,7 @@ export async function POST(req: Request) {
         notice,
         needsHuman,
         conversationId: persisted.conversationId,
+        messageId: persisted.assistantMessageId,
         persisted: persisted.persisted,
         noEvidence,
       }),
