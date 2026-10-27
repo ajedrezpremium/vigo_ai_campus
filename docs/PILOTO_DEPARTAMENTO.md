@@ -106,7 +106,7 @@ Cada respuesta que afirma algo incluye la fuente. Si no hay evidencia, el sistem
 | Validez de citas | 1,000 | ≥ 0,95 |
 | Cita esperada | 1,000 | ≥ 0,80 |
 | *Faithfulness* operativa | 1,000 | ≥ 0,90 |
-| Latencia p95 (retrieval + compositor) | 813 ms | < 4.000 ms |
+| Latencia p95 (retrieval + compositor) | 1.043 ms | < 4.000 ms |
 
 **Benchmark de paráfrasis: 12 preguntas en ES/GL/EN**
 
@@ -124,16 +124,16 @@ Estas 12 preguntas se escribieron para que no compartieran vocabulario con el do
 - Coste de indexar todo el corpus: **0,000422 $**.
 - Coste de una consulta: ~30 tokens de embedding (~0,0000006 $), despreciable frente al coste del LLM.
 - Pruebas: **59/59** en verde; `lint`, `tsc` y `build` limpios.
-- Migración `0003` (índice HNSW) preparada y probada; pendiente de aplicar en la base de datos remota por falta de credenciales administrativas. Mientras tanto, la búsqueda semántica funciona en memoria con los 131 vectores, sin degradar la calidad.
+- Migración `0003` aplicada: índice HNSW y función `match_document_chunks` activos en Supabase (`npm run semantic:status` → `Backend: pgvector`). La RPC tarda 85–250 ms y el *fallback* en memoria se conserva como red de seguridad.
 
 ### 3.3 Lo que todavía no está resuelto
 
 La honestidad aquí es parte del argumento. Un piloto mal planteado genera datos que no sirven; uno bien planteado reconoce sus límites antes de empezar.
 
-1. **Latencia del LLM real.** Con modelos gratuitos se han medido respuestas de 8–29 s. El retrieval y el compositor cumplen de sobra (p95 813 ms), pero la experiencia completa necesita un modelo de pago: 1–3 s típicos por respuesta. El piloto debe incluir una pequeña partida para eso (ver §7).
+1. **Latencia del LLM real.** Con modelos gratuitos se han medido respuestas de 8–29 s. El retrieval y el compositor cumplen de sobra (p95 1.043 ms, dominado por la llamada de embeddings), pero la experiencia completa necesita un modelo de pago: 1–3 s típicos por respuesta. El piloto debe incluir una pequeña partida para eso (ver §7).
 2. **Cobertura del corpus.** El corpus actual cubre la información pública general de la UVigo. La información específica del departamento (guías docentes, horarios, TFG, prácticas) habrá que añadirla en las dos primeras semanas.
-3. **Migración pendiente.** El índice HNSW no está activo en remoto; se aplica en la semana 1 del piloto. El *fallback* en memoria ya funciona, así que no bloquea el arranque.
-4. **Validación con usuarios.** No hay todavía un estudio de usabilidad con estudiantado real. El piloto lo incluye (5 sesiones moderadas en la semana 3).
+3. **Datos de uso real.** No hay todavía un estudio de usabilidad con estudiantado real ni un registro de consultas reales. El piloto cubre ambas cosas: 5 sesiones moderadas en la semana 3 y 5 semanas de uso instrumentado.
+4. **Adopción.** Un asistente correcto pero invisible no genera datos. Por eso el diseño incluye un botón en páginas de alta consulta, un QR en secretaría y un correo de presentación.
 
 ---
 
@@ -172,7 +172,7 @@ Si H1–H3 se cumplen y H4 no empeora, el piloto se considera un éxito y se rec
 
 | Semana | Qué se hace | Entregable |
 |---|---|---|
-| 1 | Acuerdo, revisión con el DPO, aplicación de la migración `0003`, alta del corpus del departamento | Checklist legal + corpus ampliado |
+| 1 | Acuerdo, revisión con el DPO, verificación del backend pgvector, alta del corpus del departamento | Checklist legal + corpus ampliado |
 | 2 | Integración del botón y la página `/asistente`; analítica sin cookies; aviso de privacidad | URL de pruebas accesible |
 | 3 | 5 sesiones de usabilidad (20–30 min) y corrección de los 5 problemas más graves | Informe de usabilidad |
 | 4 | Lanzamiento controlado: enlace visible en 2 páginas de alta consulta | Primer panel semanal |

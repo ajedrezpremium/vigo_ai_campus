@@ -131,7 +131,7 @@ Reglas de fusión:
 - Fuentes demo: el tramo semántico las penaliza al 55 % y `includeDemo: false` las excluye.
 - Se garantiza el top-3 léxico para que una pregunta como «grados» no pierda `uvigo-grados`.
 
-`npm run semantic:status` distingue `rpc` (pgvector activo) de `cache` (migración pendiente, cálculo en el proceso). El *fallback* en memoria es viable porque el corpus tiene 131 fragmentos; a partir de unos pocos miles habría que aplicar la migración.
+`npm run semantic:status` muestra el backend activo. En este proyecto es `rpc` (pgvector + HNSW); `cache` indica que la función no está disponible y que el coseno se calcula en el proceso. El *fallback* en memoria se mantiene como red de seguridad y es viable con 131 fragmentos, pero el índice HNSW es el camino recomendado al crecer.
 
 ### Evaluación de IA
 
@@ -152,7 +152,7 @@ El set vive en `lib/evaluation/dataset.ts` (30 preguntas: 22 respondibles y 8 de
 | Recall@5 | 0,333 | 1,000 |
 | MRR | 0,144 | 0,825 |
 
-En el set principal el híbrido mantiene 1,000 en recall, cobertura, abstención, citas y *faithfulness*, con p95 de 813 ms (el cálculo del coseno en memoria domina la latencia).
+En el set principal el híbrido mantiene 1,000 en recall, cobertura, abstención, citas y *faithfulness*, con p95 de 1.043 ms. La llamada de embeddings (~600–750 ms por consulta) domina la latencia; la RPC de pgvector tarda 85–250 ms.
 
 ### Feedback y conocimiento
 
@@ -242,5 +242,5 @@ Webhook: `POST /api/webhooks/uvigo` con cabecera `x-uvigo-signature: sha256=<hma
 3. Configurar SSO SAML/OIDC con la UVigo.
 4. Firmar convenio para endpoints SEDE/Secretaría/Campus Remoto.
 5. Revisión manual con lector de pantalla real (la auditoría axe ya está en CI).
-6. Aplicar `0003_semantic_search.sql` en la BD remota para sustituir el *fallback* en memoria por pgvector + HNSW.
+6. Mantener el corpus del departamento actualizado y revisar semanalmente las preguntas sin respuesta.
 7. Reindexar el corpus cuando cambie el modelo de embeddings (`npm run embed:corpus`) y fijar `EMBEDDINGS_DIMENSIONS` a la dimensión de la columna.

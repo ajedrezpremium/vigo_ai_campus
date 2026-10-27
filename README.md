@@ -86,14 +86,14 @@ npm run embed:corpus -- --dry-run   # coste estimado sin llamar a la API
 - `lib/hybrid.ts` fusiona ambos rankings con RRF. Con un ancla léxica fuerte el semántico solo complementa (peso 0,95 y 1 plaza reservada); con BM25 perdido (cobertura < 0,5) el semántico lidera (peso 1,15 y hasta 3 plazas) para rescatar paráfrasis.
 - La abstención sigue siendo **léxica** (`shouldAbstain()`): en los datos medidos hay consultas fuera de alcance con similitud 0,56 y preguntas válidas con 0,44, así que un umbral de coseno no separa ambos casos con seguridad.
 
-Aplicar la migración (necesaria para pasar de memoria a pgvector):
+La migración `0003` ya está aplicada en el proyecto: `npm run semantic:status` muestra `Backend: pgvector (match_document_chunks)`. Si hay que recrearla en otro entorno:
 
 ```bash
 supabase db push
 # o pegar supabase/migrations/0003_semantic_search.sql en el SQL Editor de Supabase
 ```
 
-Sin la migración el sistema funciona igual, pero `npm run semantic:status` muestra `Backend: memoria (falta la migración)`.
+El *fallback* en memoria se conserva como red de seguridad: si la RPC no está disponible o falla, el chat sigue respondiendo con BM25 + coseno en el proceso.
 
 ### Evaluación de la IA
 
@@ -115,7 +115,7 @@ Resultados con el corpus actual (2026-10-27, compositor determinista):
 | *Faithfulness* | 1,000 | 1,000 |
 | Recall@5 (12 paráfrasis) | 0,333 | **1,000** |
 | MRR (12 paráfrasis) | 0,144 | **0,825** |
-| Latencia p95 | 1 ms | 813 ms |
+| Latencia p95 | 1 ms | 1.043 ms |
 
 El coste de indexar los 131 fragmentos fue de **0,000422 $** y cada consulta ronda los 30 tokens (~0,0000006 $).
 
@@ -209,8 +209,8 @@ CI/CD: `.github/workflows/deploy.yml` ejecuta lint, tests, build, accesibilidad 
 
 ## Límites conocidos
 
-- La migración `supabase/migrations/0003_semantic_search.sql` (índice HNSW + `match_document_chunks`) está en el repo pero **no aplicada en la BD remota**: falta un access token de Supabase o la contraseña. Mientras tanto la búsqueda semántica se resuelve en memoria sobre los 131 fragmentos ya vectorizados.
-- La latencia de extremo a extremo depende del modelo de OpenRouter: con modelos `:free` se han medido 8–29 s por respuesta. El umbral de 4 s se cumple en retrieval + compositor (p95 813 ms), pero no con el LLM real.
+- `pgvector` está activo en Supabase (índice HNSW y función `match_document_chunks`). La latencia del retrieval híbrido es de ~1 s p95, dominada por la llamada de embeddings (~600–750 ms); la RPC tarda 85–250 ms. El *fallback* en memoria queda como red de seguridad.
+- La latencia de extremo a extremo depende del modelo de OpenRouter: con modelos `:free` se han medido 8–29 s por respuesta. El umbral de 4 s se cumple en retrieval + compositor (p95 1.043 ms), pero no con el LLM real.
 - Los endpoints reales de SEDE, Secretaría y Campus Remoto requieren convenio y credenciales de la UVigo; los adaptadores devuelven `configured: false` y no inventan datos.
 - El rate limiting usa Upstash Redis si `UPSTASH_REDIS_REST_URL` y `_TOKEN` están definidos; si no, cae a memoria por instancia.
 - Las imágenes del campus son de `uvigo.gal` y se usan con atribución en un contexto académico. Para uso comercial hay que obtener licencia.
